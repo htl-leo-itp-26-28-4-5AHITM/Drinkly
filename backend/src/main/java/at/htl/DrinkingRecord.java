@@ -1,4 +1,4 @@
-package at.drinkly.model;
+package at.htl;
 
 import java.sql.Timestamp;
 
@@ -10,7 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
 @Entity
-public class DrinkEntry extends PanacheEntityBase {
+public class DrinkingRecord extends PanacheEntityBase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,8 +22,4 @@ public class DrinkEntry extends PanacheEntityBase {
     public User user;
 
     public double drinkingAmount;
-
-    public int getId() {
-        return this.id;
-    }
 }

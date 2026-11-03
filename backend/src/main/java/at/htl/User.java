@@ -1,5 +1,8 @@
-package at.drinkly.model;
+package at.htl;
 
+import jakarta.persistence.Embeddable;
+
+@Embeddable
 public class User {
     public String username;
 
