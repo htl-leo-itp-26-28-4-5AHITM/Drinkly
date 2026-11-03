@@ -4,8 +4,11 @@ import java.net.URI;
 import java.sql.Timestamp;
 import java.util.List;
 
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -18,6 +21,9 @@ import jakarta.ws.rs.core.Response;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class DrinkingResource {
+
+    @Inject
+    Event<EntriesChanged> changed;
 
     @GET
     public List<DrinkingRecord> getAll() {
@@ -39,7 +45,6 @@ public class DrinkingResource {
                     .entity("user.username is required").build();
         }
 
-        // Build a fresh entity so a client-supplied id can't interfere
         DrinkingRecord record = new DrinkingRecord();
         record.user = input.user;
         record.drinkingAmount = input.drinkingAmount;
@@ -48,7 +53,19 @@ public class DrinkingResource {
                 : new Timestamp(System.currentTimeMillis());
         record.persist();
 
+        changed.fire(new EntriesChanged());
         return Response.created(URI.create("/entries/" + record.user.username))
                 .entity(record).build();
+    }
+
+    @DELETE
+    @Path("/{id}")
+    @Transactional
+    public Response delete(@PathParam("id") int id) {
+        if (!DrinkingRecord.deleteById(id)) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        changed.fire(new EntriesChanged());
+        return Response.noContent().build();
     }
 }
