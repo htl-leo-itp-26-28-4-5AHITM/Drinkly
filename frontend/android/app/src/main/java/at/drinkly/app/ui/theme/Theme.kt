@@ -22,8 +22,8 @@ val HydrationStatus.accent: Color
     get() = when (this) {
         HydrationStatus.GOAL_REACHED -> Color(0xFF169C86)
         HydrationStatus.ON_TRACK -> DrinklyColors.Blue
-        HydrationStatus.SLIGHTLY_BEHIND -> Color(0xFFC98A00)
-        HydrationStatus.BEHIND -> Color(0xFFD9572B)
+        HydrationStatus.SLIGHTLY_BEHIND -> Color(0xFF2E96D8)
+        HydrationStatus.BEHIND -> Color(0xFF45AEE6)
     }
 
 /** Color of the water wave on the Today screen. */
@@ -31,8 +31,8 @@ val HydrationStatus.water: Color
     get() = when (this) {
         HydrationStatus.GOAL_REACHED -> Color(0xFFCBEDE5)
         HydrationStatus.ON_TRACK -> DrinklyColors.Water
-        HydrationStatus.SLIGHTLY_BEHIND -> Color(0xFFF6E9C6)
-        HydrationStatus.BEHIND -> Color(0xFFF8D9CC)
+        HydrationStatus.SLIGHTLY_BEHIND -> Color(0xFFD5EBF9)
+        HydrationStatus.BEHIND -> Color(0xFFD9F0FC)
     }
 
 @Composable

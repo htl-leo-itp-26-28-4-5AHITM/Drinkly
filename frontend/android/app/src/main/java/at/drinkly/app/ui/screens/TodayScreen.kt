@@ -76,7 +76,7 @@ import at.drinkly.app.ui.theme.water
 import java.time.Duration
 import java.time.Instant
 
-private val Flame = Color(0xFFE8743B)
+private val Flame = Color(0xFF45AEE6)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,36 +117,38 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
                 "$shownMl",
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
-                fontSize = 96.sp,
-                fontWeight = FontWeight.Medium,
-                letterSpacing = (-2).sp,
+                fontSize = 136.sp,
+                lineHeight = 136.sp,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = (-6).sp,
                 color = accent,
             )
             Text(
                 "of ${d.settings.goalMl} ml goal",
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
-                fontSize = 16.sp,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
                 color = DrinklyColors.Muted,
             )
-            Spacer(Modifier.height(14.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
+            Spacer(Modifier.height(20.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally)) {
                 Chip(Icons.Rounded.WaterDrop, d.status.label, accent)
                 Chip(Icons.Rounded.LocalFireDepartment, "${d.streak}-day streak", Flame)
             }
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(28.dp))
             Icon(
                 Icons.Rounded.Add,
                 contentDescription = "Add a drink",
                 tint = DrinklyColors.Navy,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
-                    .shadow(8.dp, CircleShape, spotColor = DrinklyColors.Navy.copy(alpha = 0.3f))
+                    .shadow(12.dp, CircleShape, spotColor = DrinklyColors.Navy.copy(alpha = 0.3f))
                     .clip(CircleShape)
                     .background(Color.White)
                     .clickable { showAddSheet = true }
-                    .padding(14.dp)
-                    .size(24.dp),
+                    .padding(20.dp)
+                    .size(32.dp),
             )
 
             Spacer(Modifier.weight(1f))

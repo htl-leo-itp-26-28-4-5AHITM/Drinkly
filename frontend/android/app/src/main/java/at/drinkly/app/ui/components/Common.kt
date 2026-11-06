@@ -77,11 +77,11 @@ fun Chip(icon: ImageVector, text: String, color: Color, modifier: Modifier = Mod
         modifier
             .clip(RoundedCornerShape(50))
             .background(color.copy(alpha = 0.12f))
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+            .padding(horizontal = 16.dp, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(16.dp))
-        Text(text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = color)
+        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
+        Text(text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = color)
     }
 }

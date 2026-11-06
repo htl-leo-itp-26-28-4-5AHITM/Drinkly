@@ -1,0 +1,19 @@
+Die App erhällt die Daten der Flasche über Bluetooth und gibt
+diese ins Backend. Die Smartwatch erhällt die Daten vom
+Mobile Device und nicht von der Flasche, um den Traffic bei
+der Flasche bestmöglich zu minimieren, was zu weniger
+Fehleranfälligkeit und besserer Akkulaufzeit führt.
+In der App ist auf der Startseite, die heutige Trinkmenge, der
+mit Farbe dargestellter Hydrationsstatus und die Streak. Klein
+darunter der Bluetooth Connection Status und der Akkustand
+der Flasche. Auf einer Unterseite sind Statistiken über längere
+Zeit zu sehen. Die dritte Seite enthällt Pläne, wie man seine
+Errinerungen erhalten möchte und die letzte Seite enthällt
+Profil Einstellungen.
+Da auf der Uhr nicht viel Platz ist, werden die Informationen
+hier minimal gehalten: Zusätzlich zu den über den Tag
+verteilten Trink-Errinerungen, ist im Widget die heutige
+Trinkmenge und die Streak zu sehen. Außerdem bekommt
+das Mobile Device die Vital- und Trainingsdaten von der Uhr
+Die Apps werden nativ für iOS & Android entwickelt, nicht als
+Webapp. Es gibt auch eine Web Ansicht
