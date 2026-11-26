@@ -28,6 +28,9 @@ object Hydration {
     /** Drinks and app use before this hour still belong to the night, not to a new day. */
     const val EARLIEST_DAY_START_HOUR = 4
 
+    /** Day of the initial goal-history entry, so the first real change keeps the earlier goal. */
+    val SINCE_ALWAYS: LocalDate = LocalDate.of(2000, 1, 1)
+
     fun dailyTotals(entries: List<DrinkEntry>, zone: ZoneId = ZoneId.systemDefault()): Map<LocalDate, Int> =
         entries.groupBy { it.timestamp.atZone(zone).toLocalDate() }
             .mapValues { (_, drinks) -> drinks.sumOf { it.milliliters } }

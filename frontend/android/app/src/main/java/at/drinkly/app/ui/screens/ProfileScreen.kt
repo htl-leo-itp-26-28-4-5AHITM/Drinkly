@@ -211,7 +211,8 @@ fun ProfileScreen(
 private fun GoalHistoryChart(d: Dashboard, modifier: Modifier = Modifier) {
     val measurer = rememberTextMeasurer()
     val style = TextStyle(fontSize = 11.sp, color = DrinklyColors.Muted)
-    val start = minOf(d.today.minusDays(30), d.goalHistory.firstOrNull()?.day ?: d.today)
+    // Last 30 days, or back to the first real change (the first entry is the "since always" goal)
+    val start = minOf(d.today.minusDays(30), d.goalHistory.getOrNull(1)?.day ?: d.today)
     val totalDays = ChronoUnit.DAYS.between(start, d.today).toFloat()
     val points = listOf(start to d.goalOn(start)) +
         d.goalHistory.filter { it.day.isAfter(start) && it.day.isBefore(d.today) }.map { it.day to it.goalMl } +

@@ -72,12 +72,12 @@ class SettingsStore(context: Context) {
         )
     }
 
-    /** Stored as "2026-11-01=2000;2026-11-12=2500"; starts with today's goal when nothing was saved yet. */
+    /** Stored as "2000-01-01=2000;2026-11-12=2500"; starts with the current goal "since always" when nothing was saved yet. */
     private fun loadGoalHistory(): List<GoalChange> {
         val saved = prefs.getString("goalHistory", null).orEmpty().split(';').mapNotNull { part ->
             val (day, goal) = part.split('=').takeIf { it.size == 2 } ?: return@mapNotNull null
             runCatching { GoalChange(LocalDate.parse(day), goal.toInt()) }.getOrNull()
         }
-        return saved.ifEmpty { listOf(GoalChange(LocalDate.now(), _settings.value.goalMl)) }
+        return saved.ifEmpty { listOf(GoalChange(Hydration.SINCE_ALWAYS, _settings.value.goalMl)) }
     }
 }
