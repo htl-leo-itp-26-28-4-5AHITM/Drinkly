@@ -45,39 +45,16 @@ struct Card<Content: View>: View {
     }
 }
 
-struct Chip: View {
-    let symbol: String
-    let text: String
-    let color: Color
-
-    var body: some View {
-        Label(text, systemImage: symbol)
-            .font(.footnote.weight(.semibold))
-            .foregroundStyle(color)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(color.opacity(0.12), in: Capsule())
+/// Shrinks and dims slightly while pressed, so every tap gets visible feedback.
+struct PressableButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+            .opacity(configuration.isPressed ? 0.85 : 1)
+            .animation(.spring(duration: 0.25), value: configuration.isPressed)
     }
 }
 
-/// Round white icon next to a small label and a value, as in the bottle row on the Today screen.
-struct InfoBadge: View {
-    let symbol: String
-    let label: String
-    let value: String
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: symbol)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Theme.navy)
-                .frame(width: 42, height: 42)
-                .background(.white, in: Circle())
-            VStack(alignment: .leading, spacing: 0) {
-                Text(label).font(.caption).foregroundStyle(Theme.muted)
-                Text(value).font(.callout.weight(.semibold)).foregroundStyle(Theme.ink)
-            }
-        }
-        .accessibilityElement(children: .combine)
-    }
+extension ButtonStyle where Self == PressableButtonStyle {
+    static var pressable: PressableButtonStyle { PressableButtonStyle() }
 }

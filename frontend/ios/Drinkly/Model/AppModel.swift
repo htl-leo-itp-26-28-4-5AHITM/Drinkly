@@ -14,6 +14,10 @@ final class AppModel: ObservableObject {
     @Published private(set) var bottle = BottleState()
     @Published private(set) var now = Date.now
     @Published var toast: String?
+    /// Goal changes over time, oldest first.
+    @Published private(set) var goalHistory: [GoalChange] = []
+    /// The first time the app was opened today, used to detect when the day started.
+    @Published private(set) var firstActive: Date?
 
     private let bottleConnection = SimulatedBottle()
     private var liveTask: Task<Void, Never>?
@@ -21,6 +25,8 @@ final class AppModel: ObservableObject {
     private var toastTask: Task<Void, Never>?
 
     private static let settingsKey = "settings"
+    private static let goalHistoryKey = "goalHistory"
+    private static let firstActiveKey = "firstActive"
 
     init() {
         if let data = UserDefaults.standard.data(forKey: Self.settingsKey),
@@ -29,6 +35,15 @@ final class AppModel: ObservableObject {
         } else {
             settings = AppSettings()
         }
+        let defaults = UserDefaults.standard
+        if let data = defaults.data(forKey: Self.goalHistoryKey),
+           let saved = try? JSONDecoder().decode([GoalChange].self, from: data), !saved.isEmpty {
+            goalHistory = saved
+        } else {
+            goalHistory = [GoalChange(day: Calendar.current.startOfDay(for: .now), goalMl: settings.goalMl)]
+        }
+        firstActive = defaults.object(forKey: Self.firstActiveKey) as? Date
+        markActive()
 
         bottleConnection.onStateChange = { [weak self] state in self?.bottle = state }
         // Sips measured by the bottle go straight to the backend
@@ -49,18 +64,33 @@ final class AppModel: ObservableObject {
     private var api: DrinklyAPI { DrinklyAPI(baseUrl: settings.backendUrl) }
     var totals: [Date: Int] { Hydration.dailyTotals(entries) }
     var todayMl: Int { totals[Calendar.current.startOfDay(for: now)] ?? 0 }
-    var progress: Double { min(Double(todayMl) / Double(settings.goalMl), 1) }
-    var streak: Int { Hydration.streak(totals: totals, goalMl: settings.goalMl, today: now) }
-    var longestStreak: Int { Hydration.longestStreak(totals: totals, goalMl: settings.goalMl) }
-    var status: HydrationStatus {
-        Hydration.status(todayMl: todayMl, goalMl: settings.goalMl, now: now,
-                         wakeHour: settings.wakeHour, sleepHour: settings.sleepHour)
+    /// Share of the goal, may go above 1.
+    var progress: Double { Double(todayMl) / Double(settings.goalMl) }
+    var streak: Int { Hydration.streak(totals: totals, goal: goal(on:), today: now) }
+    var longestStreak: Int { Hydration.longestStreak(totals: totals, goal: goal(on:)) }
+    var dayStart: Date {
+        Hydration.dayStart(now: now, wakeHour: settings.wakeHour, detectWakeUp: settings.startOnWakeUp,
+                           firstActive: firstActive, entries: entries)
+    }
+    var expectedMl: Int {
+        Hydration.expected(by: now, goalMl: settings.goalMl, start: dayStart, sleepHour: settings.sleepHour)
+    }
+    var message: HydrationMessage {
+        Hydration.message(todayMl: todayMl, goalMl: settings.goalMl, expectedMl: expectedMl,
+                          lastHourMl: Hydration.lastHour(entries, now: now), streak: streak)
+    }
+    var status: HydrationStatus { message.status }
+
+    /// The goal that applied on `day` (the current one for today).
+    func goal(on day: Date) -> Int {
+        Hydration.goal(on: Calendar.current.startOfDay(for: day), history: goalHistory, fallback: settings.goalMl)
     }
 
     // MARK: Actions
 
     func refresh() {
         now = .now
+        markActive()
         Task { await load() }
     }
 
@@ -110,6 +140,12 @@ final class AppModel: ObservableObject {
         if let data = try? JSONEncoder().encode(settings) {
             UserDefaults.standard.set(data, forKey: Self.settingsKey)
         }
+        if old.goalMl != settings.goalMl {
+            goalHistory = Hydration.recordGoal(settings.goalMl, on: Calendar.current.startOfDay(for: .now), in: goalHistory)
+            if let data = try? JSONEncoder().encode(goalHistory) {
+                UserDefaults.standard.set(data, forKey: Self.goalHistoryKey)
+            }
+        }
         if old.backendUrl != settings.backendUrl || old.username != settings.username {
             startLiveUpdates()
         }
@@ -154,10 +190,21 @@ final class AppModel: ObservableObject {
         rescheduleReminders()
     }
 
+    /// Remembers the first time the app is used each day, as a sign that you got up.
+    private func markActive() {
+        let now = Date.now
+        let calendar = Calendar.current
+        if let firstActive, calendar.isDate(firstActive, inSameDayAs: now) { return }
+        guard calendar.component(.hour, from: now) >= Hydration.earliestDayStartHour else { return }
+        firstActive = now
+        UserDefaults.standard.set(now, forKey: Self.firstActiveKey)
+    }
+
     private func rescheduleReminders() {
         let settings = settings
         let todayMl = todayMl
-        Task { await ReminderScheduler.reschedule(settings: settings, todayMl: todayMl) }
+        let dayStart = dayStart
+        Task { await ReminderScheduler.reschedule(settings: settings, todayMl: todayMl, dayStart: dayStart) }
     }
 
     private func show(_ message: String) {

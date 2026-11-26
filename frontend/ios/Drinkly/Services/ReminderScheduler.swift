@@ -11,7 +11,9 @@ enum ReminderScheduler {
         _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])
     }
 
-    static func reschedule(settings: AppSettings, todayMl: Int, now: Date = .now, calendar: Calendar = .current) async {
+    /// `dayStart` is when today began; later days start at the wake-up hour.
+    static func reschedule(settings: AppSettings, todayMl: Int, dayStart: Date, now: Date = .now,
+                           calendar: Calendar = .current) async {
         let center = UNUserNotificationCenter.current()
         let pending = await center.pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix(prefix) }
         center.removePendingNotificationRequests(withIdentifiers: pending)
@@ -21,12 +23,13 @@ enum ReminderScheduler {
 
         for dayOffset in 0..<daysAhead {
             let day = calendar.date(byAdding: .day, value: dayOffset, to: today)!
-            for hour in stride(from: settings.wakeHour, to: settings.sleepHour, by: interval) {
+            let firstHour = dayOffset == 0 ? calendar.component(.hour, from: dayStart) : settings.wakeHour
+            for hour in stride(from: firstHour + interval, through: settings.sleepHour - 1, by: interval) {
                 guard let slot = calendar.date(bySettingHour: hour, minute: 0, second: 0, of: day), slot > now else { continue }
 
                 if dayOffset == 0 && settings.onlyWhenBehind {
                     let expected = Hydration.expected(
-                        by: slot, goalMl: settings.goalMl, wakeHour: settings.wakeHour, sleepHour: settings.sleepHour
+                        by: slot, goalMl: settings.goalMl, start: dayStart, sleepHour: settings.sleepHour
                     )
                     if todayMl >= expected { continue } // already on track for this slot
                 }
