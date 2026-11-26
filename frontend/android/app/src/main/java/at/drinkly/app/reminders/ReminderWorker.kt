@@ -16,23 +16,27 @@ import at.drinkly.app.data.DrinklyApi
 import at.drinkly.app.data.Hydration
 import at.drinkly.app.data.HydrationStatus
 import at.drinkly.app.data.SettingsStore
+import java.time.Instant
 import java.time.LocalDate
-import java.time.LocalTime
+import java.time.LocalDateTime
 
 class ReminderWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
-        val settings = SettingsStore(applicationContext).current
-        val now = LocalTime.now()
-        if (now.hour < settings.wakeHour || now.hour >= settings.sleepHour) return Result.success()
+        val store = SettingsStore(applicationContext)
+        val settings = store.current
+        val now = LocalDateTime.now()
+        val entries = runCatching { DrinklyApi { settings.backendUrl }.entries(settings.username) }.getOrNull()
+        val dayStart = Hydration.dayStart(now, settings.wakeHour, settings.startOnWakeUp, store.firstActive.value, entries.orEmpty())
+        // Not up yet (or already asleep): stay quiet
+        if (now.isBefore(dayStart) || now.hour >= settings.sleepHour) return Result.success()
 
-        val todayMl = runCatching {
-            Hydration.dailyTotals(DrinklyApi { settings.backendUrl }.entries(settings.username))[LocalDate.now()] ?: 0
-        }.getOrNull()
+        val todayMl = entries?.let { Hydration.dailyTotals(it)[LocalDate.now()] ?: 0 }
 
         if (settings.onlyWhenBehind && todayMl != null) {
-            val status = Hydration.status(todayMl, settings.goalMl, now, settings.wakeHour, settings.sleepHour)
-            if (status == HydrationStatus.GOAL_REACHED || status == HydrationStatus.ON_TRACK) return Result.success()
+            val expected = Hydration.expectedBy(now.toLocalTime(), settings.goalMl, dayStart.toLocalTime(), settings.sleepHour)
+            val status = Hydration.status(todayMl, settings.goalMl, expected, Hydration.lastHour(entries, Instant.now()))
+            if (status != HydrationStatus.BEHIND && status != HydrationStatus.SLIGHTLY_BEHIND) return Result.success()
         }
 
         val text = if (todayMl != null) "You're at $todayMl of ${settings.goalMl} ml today." else "Remember to drink some water."

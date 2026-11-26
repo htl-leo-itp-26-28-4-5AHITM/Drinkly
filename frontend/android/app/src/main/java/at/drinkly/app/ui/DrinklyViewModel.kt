@@ -9,7 +9,9 @@ import at.drinkly.app.bottle.SimulatedBottle
 import at.drinkly.app.data.AppSettings
 import at.drinkly.app.data.DrinkEntry
 import at.drinkly.app.data.DrinklyApi
+import at.drinkly.app.data.GoalChange
 import at.drinkly.app.data.Hydration
+import at.drinkly.app.data.HydrationMessage
 import at.drinkly.app.data.HydrationStatus
 import at.drinkly.app.data.SettingsStore
 import at.drinkly.app.reminders.ReminderScheduler
@@ -30,6 +32,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -46,14 +49,27 @@ data class Dashboard(
     val totals: Map<LocalDate, Int>,
     val today: LocalDate,
     val todayMl: Int,
+    val lastHourMl: Int,
     val streak: Int,
     val longestStreak: Int,
-    val status: HydrationStatus,
+    val goalHistory: List<GoalChange>,
+    val dayStart: LocalDateTime,
+    val message: HydrationMessage,
     val bottle: BottleState,
     val sync: SyncState,
+    val now: LocalDateTime,
 ) {
-    val progress: Float get() = (todayMl.toFloat() / settings.goalMl).coerceIn(0f, 1f)
+    val status: HydrationStatus get() = message.status
+
+    /** Share of the goal, may go above 1. */
+    val progress: Float get() = todayMl.toFloat() / settings.goalMl
+
+    /** The goal that applied on [day] (the current one for today). */
+    fun goalOn(day: LocalDate): Int = Hydration.goalOn(day, goalHistory, settings.goalMl)
 }
+
+/** Settings plus the goal history and when today started. */
+private data class Profile(val settings: AppSettings, val goalHistory: List<GoalChange>, val firstActive: LocalDateTime?)
 
 class DrinklyViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -73,11 +89,16 @@ class DrinklyViewModel(app: Application) : AndroidViewModel(app) {
     private val _messages = MutableSharedFlow<String>(extraBufferCapacity = 4)
     val messages: SharedFlow<String> = _messages.asSharedFlow()
 
+    private val profile = combine(store.settings, store.goalHistory, store.firstActive, ::Profile)
+
     val dashboard: StateFlow<Dashboard> =
-        combine(entries, store.settings, bottle.state, sync, clock, ::buildDashboard)
+        combine(entries, profile, bottle.state, sync, clock, ::buildDashboard)
             .stateIn(
                 viewModelScope, SharingStarted.Eagerly,
-                buildDashboard(emptyList(), store.current, bottle.state.value, sync.value, LocalDateTime.now()),
+                buildDashboard(
+                    emptyList(), Profile(store.current, store.goalHistory.value, store.firstActive.value),
+                    bottle.state.value, sync.value, LocalDateTime.now(),
+                ),
             )
 
     init {
@@ -111,6 +132,7 @@ class DrinklyViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun refresh() {
+        store.markActive()
         viewModelScope.launch { load() }
     }
 
@@ -177,25 +199,37 @@ class DrinklyViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun buildDashboard(
         entries: List<DrinkEntry>,
-        settings: AppSettings,
+        profile: Profile,
         bottle: BottleState,
         sync: SyncState,
-        now: LocalDateTime,
+        clockTime: LocalDateTime,
     ): Dashboard {
+        // The clock only ticks every minute; new drinks should count right away
+        val now = LocalDateTime.now().takeIf { it.isAfter(clockTime) } ?: clockTime
+        val settings = profile.settings
         val totals = Hydration.dailyTotals(entries)
         val today = now.toLocalDate()
         val todayMl = totals[today] ?: 0
+        val goal = { day: LocalDate -> Hydration.goalOn(day, profile.goalHistory, settings.goalMl) }
+        val streak = Hydration.streak(totals, goal, today)
+        val lastHourMl = Hydration.lastHour(entries, Instant.now())
+        val dayStart = Hydration.dayStart(now, settings.wakeHour, settings.startOnWakeUp, profile.firstActive, entries)
+        val expected = Hydration.expectedBy(now.toLocalTime(), settings.goalMl, dayStart.toLocalTime(), settings.sleepHour)
         return Dashboard(
             settings = settings,
             entries = entries,
             totals = totals,
             today = today,
             todayMl = todayMl,
-            streak = Hydration.streak(totals, settings.goalMl, today),
-            longestStreak = Hydration.longestStreak(totals, settings.goalMl),
-            status = Hydration.status(todayMl, settings.goalMl, now.toLocalTime(), settings.wakeHour, settings.sleepHour),
+            lastHourMl = lastHourMl,
+            streak = streak,
+            longestStreak = Hydration.longestStreak(totals, goal),
+            goalHistory = profile.goalHistory,
+            dayStart = dayStart,
+            message = Hydration.message(todayMl, settings.goalMl, expected, lastHourMl, streak),
             bottle = bottle,
             sync = sync,
+            now = now,
         )
     }
 }

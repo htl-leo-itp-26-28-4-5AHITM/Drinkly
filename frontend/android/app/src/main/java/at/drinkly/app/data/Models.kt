@@ -1,6 +1,7 @@
 package at.drinkly.app.data
 
 import java.time.Instant
+import java.time.LocalDate
 import kotlin.math.roundToInt
 
 /** One drink as stored by the backend (`DrinkingRecord`). The backend stores litres. */
@@ -29,4 +30,12 @@ data class AppSettings(
     val wakeHour: Int = 7,
     val sleepHour: Int = 22,
     val onlyWhenBehind: Boolean = true,
+    /** Start the day when you get up (first use of the app or bottle) instead of at [wakeHour]. */
+    val startOnWakeUp: Boolean = true,
 )
+
+/** The daily goal from [day] on, so past days are judged by the goal that applied back then. */
+data class GoalChange(val day: LocalDate, val goalMl: Int)
+
+/** The headline on the Today screen: what's going on and what to do next. */
+data class HydrationMessage(val status: HydrationStatus, val title: String, val detail: String)
