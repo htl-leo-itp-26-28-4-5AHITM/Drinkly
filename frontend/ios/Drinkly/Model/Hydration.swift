@@ -73,7 +73,7 @@ enum Hydration {
         guard detectWakeUp else { return fixed }
         let earliest = calendar.date(bySettingHour: earliestDayStartHour, minute: 0, second: 0, of: now)!
         let signs = entries.map(\.timestamp) + [firstActive].compactMap { $0 }
-        return signs.filter { $0 >= earliest && $0 <= now }.min() ?? fixed
+        return signs.filter { $0 >= earliest && calendar.isDate($0, inSameDayAs: now) }.min() ?? fixed
     }
 
     /// How much should have been drunk by `date` if the goal is spread evenly between `start` and the sleep hour.
@@ -92,10 +92,10 @@ enum Hydration {
         return Int((Double(goalMl) * fraction).rounded())
     }
 
-    /// Millilitres drunk in the hour before `now`.
+    /// Millilitres drunk in the hour before `now`. No upper bound: the server stamps the drinks,
+    /// and its clock may run slightly ahead of the phone's.
     static func lastHour(_ entries: [DrinkEntry], now: Date) -> Int {
-        entries.filter { $0.timestamp > now.addingTimeInterval(-3600) && $0.timestamp <= now }
-            .reduce(0) { $0 + $1.milliliters }
+        entries.filter { $0.timestamp > now.addingTimeInterval(-3600) }.reduce(0) { $0 + $1.milliliters }
     }
 
     static func status(todayMl: Int, goalMl: Int, expectedMl: Int, lastHourMl: Int) -> HydrationStatus {
@@ -119,8 +119,8 @@ enum Hydration {
             return .init(status: status, title: "Goal reached",
                          detail: streak > 1 ? "Well done, that's \(streak) days in a row!" : "Well done! Come back tomorrow.")
         case .onTrack where todayMl == 0:
-            return .init(status: status, title: "Good morning",
-                         detail: "Start your day with a glass of water.")
+            return .init(status: status, title: "Let's get started",
+                         detail: "A glass of water is a good first step.")
         case .onTrack:
             return .init(status: status, title: "On track", detail: "\(goalMl - todayMl) ml to go today.")
         case .slightlyBehind:

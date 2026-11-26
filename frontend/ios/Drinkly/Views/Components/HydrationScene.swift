@@ -167,7 +167,7 @@ private struct SceneScale {
 
     init(size: CGSize, topInset: CGFloat, bottomInset: CGFloat) {
         floor = size.height - bottomInset - 30
-        zero = floor + 10 // empty water hides behind the sand
+        zero = floor + 22 // empty water (incl. its waves) hides behind the sand
         top = topInset + 80
     }
 
