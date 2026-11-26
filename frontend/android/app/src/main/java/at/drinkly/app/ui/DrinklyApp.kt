@@ -2,6 +2,10 @@ package at.drinkly.app.ui
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,6 +49,7 @@ import at.drinkly.app.ui.screens.ActivityScreen
 import at.drinkly.app.ui.screens.ProfileScreen
 import at.drinkly.app.ui.screens.RemindersScreen
 import at.drinkly.app.ui.screens.TodayScreen
+import at.drinkly.app.ui.components.pressScale
 import at.drinkly.app.ui.theme.DrinklyColors
 import kotlinx.coroutines.launch
 
@@ -84,7 +90,7 @@ fun DrinklyApp(vm: DrinklyViewModel) {
         SnackbarHost(
             snackbar,
             Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 92.dp),
-        )
+        ) { data -> Toast(data.visuals.message) }
         BottomBar(
             tab, onSelect = { tab = it },
             modifier = Modifier
@@ -92,6 +98,25 @@ fun DrinklyApp(vm: DrinklyViewModel) {
                 .navigationBarsPadding()
                 .padding(horizontal = 20.dp, vertical = 12.dp),
         )
+    }
+}
+
+/** Short confirmation like "Added 250 ml". */
+@Composable
+private fun Toast(message: String) {
+    val shape = RoundedCornerShape(50)
+    Row(
+        Modifier
+            .shadow(12.dp, shape, ambientColor = DrinklyColors.Navy, spotColor = DrinklyColors.Navy.copy(alpha = 0.25f))
+            .clip(shape)
+            .background(Color.White)
+            .border(1.dp, DrinklyColors.Water, shape)
+            .padding(horizontal = 16.dp, vertical = 11.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Rounded.WaterDrop, contentDescription = null, tint = DrinklyColors.Blue, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(message, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
     }
 }
 
@@ -110,12 +135,14 @@ private fun BottomBar(selected: Tab, onSelect: (Tab) -> Unit, modifier: Modifier
         Tab.entries.forEach { tab ->
             val isSelected = tab == selected
             val color = if (isSelected) DrinklyColors.Blue else DrinklyColors.Muted
+            val source = remember { MutableInteractionSource() }
             Column(
                 Modifier
                     .weight(1f)
+                    .pressScale(source)
                     .clip(RoundedCornerShape(26.dp))
                     .background(if (isSelected) DrinklyColors.Sky else Color.Transparent)
-                    .selectable(isSelected, role = Role.Tab, onClick = { onSelect(tab) })
+                    .selectable(isSelected, interactionSource = source, indication = ripple(), role = Role.Tab, onClick = { onSelect(tab) })
                     .padding(vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {

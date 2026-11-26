@@ -33,12 +33,16 @@ import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.NotificationsOff
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.SelfImprovement
+import androidx.compose.material.icons.rounded.WbTwilight
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,6 +59,9 @@ import at.drinkly.app.data.ReminderPlan
 import at.drinkly.app.ui.Dashboard
 import at.drinkly.app.ui.components.ScreenTitle
 import at.drinkly.app.ui.components.SectionCard
+import at.drinkly.app.ui.components.pressScale
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import at.drinkly.app.ui.theme.DrinklyColors
 
 @Composable
@@ -97,9 +104,41 @@ fun RemindersScreen(d: Dashboard, onUpdate: ((AppSettings) -> AppSettings) -> Un
             HourStepper("Until", s.sleepHour, (s.wakeHour + 1)..24) { h -> onUpdate { it.copy(sleepHour = h) } }
             Spacer(Modifier.height(6.dp))
             Text(
-                "Reminders only arrive in this window. Your hydration status also uses it to pace the daily goal.",
+                "Reminders only arrive in this window, and your daily goal is spread across it.",
                 fontSize = 13.sp, color = DrinklyColors.Muted,
             )
+        }
+
+        SectionCard {
+            Row(
+                Modifier.toggleable(
+                    value = s.startOnWakeUp,
+                    role = Role.Switch,
+                    onValueChange = { v -> onUpdate { it.copy(startOnWakeUp = v) } },
+                ),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Start when I get up", fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
+                    Text(
+                        "Your day begins the first time you use Drinkly or your bottle in the morning, so the pace fits your real day.",
+                        fontSize = 13.sp, color = DrinklyColors.Muted,
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Switch(checked = s.startOnWakeUp, onCheckedChange = null)
+            }
+            if (s.startOnWakeUp) {
+                Spacer(Modifier.height(10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Rounded.WbTwilight, contentDescription = null, tint = DrinklyColors.Blue, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        "Today started at ${d.dayStart.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))}",
+                        fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Blue,
+                    )
+                }
+            }
         }
 
         SectionCard {
@@ -141,14 +180,16 @@ private val ReminderPlan.icon
 
 @Composable
 private fun PlanCard(plan: ReminderPlan, selected: Boolean, onClick: () -> Unit) {
+    val source = remember { MutableInteractionSource() }
     val shape = RoundedCornerShape(22.dp)
     Row(
         Modifier
             .fillMaxWidth()
+            .pressScale(source)
             .clip(shape)
             .background(Color.White)
             .border(2.dp, if (selected) DrinklyColors.Blue else Color.Transparent, shape)
-            .selectable(selected, role = Role.RadioButton, onClick = onClick)
+            .selectable(selected, interactionSource = source, indication = ripple(), role = Role.RadioButton, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

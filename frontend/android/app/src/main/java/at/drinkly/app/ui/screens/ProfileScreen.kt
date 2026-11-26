@@ -1,5 +1,6 @@
 package at.drinkly.app.ui.screens
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,7 +27,6 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
@@ -42,7 +42,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -56,7 +64,11 @@ import at.drinkly.app.ui.Dashboard
 import at.drinkly.app.ui.components.BottleIllustration
 import at.drinkly.app.ui.components.ScreenTitle
 import at.drinkly.app.ui.components.SectionCard
+import at.drinkly.app.ui.components.liters
 import at.drinkly.app.ui.theme.DrinklyColors
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
 
 @Composable
@@ -107,7 +119,6 @@ fun ProfileScreen(
                 onValueChange = { v -> onUpdate { it.copy(goalMl = (v / 50).roundToInt() * 50) } },
                 valueRange = 1000f..4000f,
             )
-            HorizontalDivider(Modifier.padding(vertical = 8.dp), color = DrinklyColors.Line)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Body weight", Modifier.weight(1f), color = DrinklyColors.Ink)
                 FilledTonalIconButton(
@@ -129,6 +140,21 @@ fun ProfileScreen(
                     enabled = suggested != s.goalMl,
                 ) { Text("Use as goal") }
             }
+        }
+
+        SectionCard("Goal over time") {
+            GoalHistoryChart(d, Modifier.fillMaxWidth().height(130.dp))
+            Spacer(Modifier.height(8.dp))
+            val history = d.goalHistory
+            Text(
+                if (history.size > 1) {
+                    "Changed from ${history[history.size - 2].goalMl} to ${history.last().goalMl} ml on " +
+                        history.last().day.format(DateTimeFormatter.ofPattern("d MMMM")) + "."
+                } else {
+                    "Your goal hasn't changed yet. When you change it, this line shows what it was before."
+                },
+                fontSize = 13.sp, color = DrinklyColors.Muted,
+            )
         }
 
         SectionCard("Bottle") {
@@ -168,14 +194,69 @@ fun ProfileScreen(
             Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val (color, text) = when {
-                    d.sync.error != null -> Color(0xFFD9572B) to "Not reachable"
-                    d.sync.live -> Color(0xFF169C86) to "Live connection"
+                    d.sync.error != null -> DrinklyColors.NoData to "Not reachable"
+                    d.sync.live -> DrinklyColors.Blue to "Live connection"
                     else -> DrinklyColors.Muted to "Connecting…"
                 }
                 Box(Modifier.size(8.dp).clip(CircleShape).background(color))
                 Spacer(Modifier.width(8.dp))
                 Text(text, fontSize = 13.sp, color = DrinklyColors.Muted)
             }
+        }
+    }
+}
+
+/** Step line of the daily goal over the last weeks, so you can see what it used to be. */
+@Composable
+private fun GoalHistoryChart(d: Dashboard, modifier: Modifier = Modifier) {
+    val measurer = rememberTextMeasurer()
+    val style = TextStyle(fontSize = 11.sp, color = DrinklyColors.Muted)
+    val start = minOf(d.today.minusDays(30), d.goalHistory.firstOrNull()?.day ?: d.today)
+    val totalDays = ChronoUnit.DAYS.between(start, d.today).toFloat()
+    val points = listOf(start to d.goalOn(start)) +
+        d.goalHistory.filter { it.day.isAfter(start) && it.day.isBefore(d.today) }.map { it.day to it.goalMl } +
+        listOf(d.today to d.settings.goalMl)
+    val top = (points.maxOf { it.second } * 1.25f)
+    val dateFormat = DateTimeFormatter.ofPattern("d MMM")
+
+    Canvas(modifier.semantics { contentDescription = "Daily goal over time, currently ${d.settings.goalMl} ml" }) {
+        val axisWidth = 34.dp.toPx()
+        val labelHeight = 18.dp.toPx()
+        val h = size.height - labelHeight
+        val w = size.width - axisWidth
+        fun x(day: LocalDate) = axisWidth + w * ChronoUnit.DAYS.between(start, day) / totalDays
+        fun y(ml: Int) = h - h * ml / top
+
+        for (ml in 0..top.toInt() step 1000) {
+            drawLine(DrinklyColors.Line, Offset(axisWidth, y(ml)), Offset(size.width, y(ml)), strokeWidth = 1.dp.toPx())
+            val layout = measurer.measure(liters(ml), style)
+            drawText(layout, topLeft = Offset(axisWidth - 6.dp.toPx() - layout.size.width, y(ml) - layout.size.height / 2f))
+        }
+
+        val line = Path()
+        points.forEachIndexed { i, (day, goal) ->
+            if (i == 0) line.moveTo(x(day), y(goal)) else {
+                line.lineTo(x(day), y(points[i - 1].second))
+                line.lineTo(x(day), y(goal))
+            }
+        }
+        val area = Path().apply {
+            addPath(line)
+            lineTo(x(d.today), h)
+            lineTo(x(start), h)
+            close()
+        }
+        drawPath(area, DrinklyColors.Blue.copy(alpha = 0.12f))
+        drawPath(line, DrinklyColors.Blue, style = Stroke(width = 2.dp.toPx()))
+
+        listOf(start, start.plusDays((totalDays / 2).toLong()), d.today).forEachIndexed { i, day ->
+            val layout = measurer.measure(day.format(dateFormat), style)
+            val left = when (i) {
+                0 -> x(day)
+                2 -> x(day) - layout.size.width
+                else -> x(day) - layout.size.width / 2
+            }
+            drawText(layout, topLeft = Offset(left, h + 4.dp.toPx()))
         }
     }
 }
