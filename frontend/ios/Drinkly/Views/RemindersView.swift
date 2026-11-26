@@ -17,9 +17,27 @@ struct RemindersView: View {
                 Card(title: "Active hours") {
                     HourStepper(label: "From", hour: $model.settings.wakeHour, range: 4...(model.settings.sleepHour - 1))
                     HourStepper(label: "Until", hour: $model.settings.sleepHour, range: (model.settings.wakeHour + 1)...24)
-                    Text("Reminders only arrive in this window. Your hydration status also uses it to pace the daily goal.")
+                    Text("Reminders only arrive in this window, and your daily goal is spread across it.")
                         .font(.footnote)
                         .foregroundStyle(Theme.muted)
+                }
+
+                Card {
+                    Toggle(isOn: $model.settings.startOnWakeUp) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Start when I get up").fontWeight(.semibold).foregroundStyle(Theme.ink)
+                            Text("Your day begins the first time you use Drinkly or your bottle in the morning, so the pace fits your real day.")
+                                .font(.footnote)
+                                .foregroundStyle(Theme.muted)
+                        }
+                    }
+                    .tint(Theme.blue)
+                    if model.settings.startOnWakeUp {
+                        Label("Today started at \(model.dayStart.formatted(date: .omitted, time: .shortened))",
+                              systemImage: "sunrise.fill")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(Theme.blue)
+                    }
                 }
 
                 Card {
@@ -77,7 +95,7 @@ private struct PlanCard: View {
                 RoundedRectangle(cornerRadius: 22).stroke(selected ? Theme.blue : .clear, lineWidth: 2)
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
         .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
 }

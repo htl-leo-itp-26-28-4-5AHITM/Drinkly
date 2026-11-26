@@ -48,7 +48,7 @@ enum Hydration {
     }
 
     static func longestStreak(totals: [Date: Int], goal: (Date) -> Int, calendar: Calendar = .current) -> Int {
-        let reached = { (day: Date) in (totals[day] ?? 0) >= goal(day) }
+        func reached(_ day: Date) -> Bool { (totals[day] ?? 0) >= goal(day) }
         var best = 0
         for day in totals.keys {
             if reached(calendar.date(byAdding: .day, value: -1, to: day)!) { continue } // not the start of a run

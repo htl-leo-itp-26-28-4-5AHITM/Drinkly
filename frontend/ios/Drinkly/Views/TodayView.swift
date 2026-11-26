@@ -256,6 +256,13 @@ private struct AddDrinkSheet: View {
     @State private var custom = 200
     @State private var showInfo = false
 
+    init(todayMl: Int, goalMl: Int, lastHourMl: Int, onAdd: @escaping (Int) -> Void) {
+        self.todayMl = todayMl
+        self.goalMl = goalMl
+        self.lastHourMl = lastHourMl
+        self.onAdd = onAdd
+    }
+
     private let presets = [("Cup", 150), ("Glass", 250), ("Can", 330), ("Bottle", 500)]
 
     /// A gentle hint when the amount would be more than the body needs.

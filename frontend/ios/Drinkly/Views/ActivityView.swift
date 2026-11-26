@@ -1,73 +1,66 @@
 import Charts
 import SwiftUI
 
+private enum ActivityRange: String, CaseIterable, Identifiable {
+    case week = "Week", month = "30 days", calendar = "Calendar"
+    var id: Self { self }
+}
+
 struct ActivityView: View {
     @EnvironmentObject private var model: AppModel
-    @State private var range = 7
+    @State private var range = ActivityRange.week
+    @State private var calendarMonth = Date.now
 
     private struct Day: Identifiable {
         let date: Date
         let ml: Int
+        let goal: Int
         var id: Date { date }
+        var hasData: Bool { ml > 0 }
     }
 
     var body: some View {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: model.now)
         let totals = model.totals
-        let goal = model.settings.goalMl
-        let days = (0..<range).reversed().map { offset in
+        let count = range == .month ? 30 : 7
+        let days = (0..<count).reversed().map { offset in
             let date = calendar.date(byAdding: .day, value: -offset, to: today)!
-            return Day(date: date, ml: totals[date] ?? 0)
+            return Day(date: date, ml: totals[date] ?? 0, goal: model.goal(on: date))
         }
-        let active = days.map(\.ml).filter { $0 > 0 }
+        let active = days.filter(\.hasData)
 
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                ScreenTitle("Activity", subtitle: "Your hydration over time")
-
                 Picker("Range", selection: $range) {
-                    Text("7 days").tag(7)
-                    Text("30 days").tag(30)
+                    ForEach(ActivityRange.allCases) { Text($0.rawValue).tag($0) }
                 }
                 .pickerStyle(.segmented)
+                .padding(.top, 16)
 
-                Card(title: "Daily intake") {
-                    Chart {
-                        ForEach(days) { day in
-                            BarMark(
-                                x: .value("Day", day.date, unit: .day),
-                                y: .value("Millilitres", day.ml)
-                            )
-                            .foregroundStyle(day.ml >= goal ? Theme.blue : Theme.blue.opacity(0.45))
-                            .cornerRadius(6)
+                if range == .calendar {
+                    CalendarCard(month: $calendarMonth)
+                } else {
+                    Card {
+                        Text((days.first!.date..<days.last!.date).formatted(.interval.day().month(.wide).year()))
+                            .font(.headline)
+                            .foregroundStyle(Theme.ink)
+                        chart(days)
+                        Text("Dashed line: your goal at the time · gray: no drinks logged")
+                            .font(.caption)
+                            .foregroundStyle(Theme.muted)
+                    }
+
+                    Grid(horizontalSpacing: 14, verticalSpacing: 14) {
+                        GridRow {
+                            StatTile(label: "Daily average",
+                                     value: active.isEmpty ? "–" : "\(active.map(\.ml).reduce(0, +) / active.count) ml")
+                            StatTile(label: "Best day", value: "\(days.map(\.ml).max() ?? 0) ml")
                         }
-                        RuleMark(y: .value("Goal", goal))
-                            .foregroundStyle(Theme.navy.opacity(0.55))
-                            .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
-                    }
-                    .chartXAxis {
-                        AxisMarks(values: .stride(by: .day, count: range == 7 ? 1 : 5)) { _ in
-                            AxisValueLabel(format: range == 7 ? Date.FormatStyle().weekday(.abbreviated) : Date.FormatStyle().day())
+                        GridRow {
+                            StatTile(label: "Goal reached", value: "\(days.filter { $0.ml >= $0.goal }.count) of \(count) days")
+                            StatTile(label: "Longest streak", value: "\(model.longestStreak) days")
                         }
-                    }
-                    .chartYAxis(.hidden)
-                    .frame(height: 190)
-
-                    Text("Dashed line: your \(goal) ml goal")
-                        .font(.caption)
-                        .foregroundStyle(Theme.muted)
-                }
-
-                Grid(horizontalSpacing: 14, verticalSpacing: 14) {
-                    GridRow {
-                        StatTile(label: "Daily average",
-                                 value: active.isEmpty ? "–" : "\(active.reduce(0, +) / active.count) ml")
-                        StatTile(label: "Best day", value: "\(days.map(\.ml).max() ?? 0) ml")
-                    }
-                    GridRow {
-                        StatTile(label: "Goal reached", value: "\(days.filter { $0.ml >= goal }.count) of \(range) days")
-                        StatTile(label: "Longest streak", value: "\(model.longestStreak) days")
                     }
                 }
 
@@ -84,6 +77,154 @@ struct ActivityView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 16)
         }
+    }
+
+    private func chart(_ days: [Day]) -> some View {
+        let yMax = Double(max(days.map(\.goal).max() ?? 0, days.map(\.ml).max() ?? 0)) * 1.1
+        let yStep: Double = yMax > 3000 ? 1000 : 500
+        // Every day for a week, every fifth day (counted back from today) for 30 days
+        let labelled = days.enumerated()
+            .filter { days.count <= 7 || (days.count - 1 - $0.offset) % 5 == 0 }
+            .map(\.element.date)
+        let withData = Set(days.filter(\.hasData).map(\.date))
+
+        return Chart {
+            ForEach(days) { day in
+                if day.hasData {
+                    BarMark(x: .value("Day", day.date, unit: .day), y: .value("Intake", Double(day.ml)))
+                        .foregroundStyle(day.ml >= day.goal ? Theme.blue : Theme.blue.opacity(0.45))
+                        .cornerRadius(6)
+                } else {
+                    // Grayed-out column: the bottle wasn't used and nothing was logged
+                    RectangleMark(x: .value("Day", day.date, unit: .day), yStart: .value("Intake", 0.0), yEnd: .value("Intake", yMax))
+                        .foregroundStyle(Theme.noData.opacity(0.3))
+                        .cornerRadius(6)
+                }
+            }
+            ForEach(days) { day in
+                LineMark(x: .value("Day", day.date, unit: .day), y: .value("Goal", Double(day.goal)))
+                    .interpolationMethod(.stepCenter)
+                    .foregroundStyle(Theme.navy.opacity(0.6))
+                    .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+            }
+        }
+        .chartYScale(domain: 0...yMax)
+        .chartYAxis {
+            AxisMarks(position: .leading, values: .stride(by: yStep)) { value in
+                AxisGridLine().foregroundStyle(Theme.line)
+                AxisValueLabel {
+                    Text(HydrationScene.liters(Int(value.as(Double.self) ?? 0)))
+                        .foregroundStyle(Theme.muted)
+                }
+            }
+        }
+        .chartXAxis {
+            AxisMarks(values: labelled) { value in
+                let date = value.as(Date.self) ?? .now
+                AxisValueLabel(centered: true) {
+                    VStack(spacing: 0) {
+                        if days.count <= 7 {
+                            Text(date, format: .dateTime.weekday(.abbreviated))
+                            Text(date, format: .dateTime.day())
+                        } else {
+                            Text(date, format: .dateTime.day().month(.abbreviated))
+                        }
+                    }
+                    .foregroundStyle(withData.contains(date) ? Theme.ink : Theme.muted.opacity(0.6))
+                }
+            }
+        }
+        .frame(height: 210)
+    }
+}
+
+/// A month at a glance: the stronger the blue, the closer you got to your goal that day.
+private struct CalendarCard: View {
+    @EnvironmentObject private var model: AppModel
+    @Binding var month: Date
+
+    var body: some View {
+        let calendar = Calendar.current
+        let interval = calendar.dateInterval(of: .month, for: month)!
+        let first = interval.start
+        let dayCount = calendar.range(of: .day, in: .month, for: first)!.count
+        let leading = (calendar.component(.weekday, from: first) - calendar.firstWeekday + 7) % 7
+        let today = calendar.startOfDay(for: model.now)
+        let totals = model.totals
+        let cells: [Date?] = Array(repeating: nil, count: leading)
+            + (0..<dayCount).map { calendar.date(byAdding: .day, value: $0, to: first)! }
+        let past = cells.compactMap { $0 }.filter { $0 <= today }
+        let reached = past.filter { (totals[$0] ?? 0) >= model.goal(on: $0) }.count
+        let symbols = calendar.veryShortStandaloneWeekdaySymbols
+        let weekdays = Array(symbols[(calendar.firstWeekday - 1)...] + symbols[..<(calendar.firstWeekday - 1)])
+
+        Card {
+            HStack {
+                Button { shift(-1) } label: {
+                    Image(systemName: "chevron.left").frame(width: 44, height: 44)
+                }
+                .accessibilityLabel("Previous month")
+                Spacer()
+                Text(first, format: .dateTime.month(.wide).year())
+                    .font(.headline)
+                    .foregroundStyle(Theme.ink)
+                Spacer()
+                Button { shift(1) } label: {
+                    Image(systemName: "chevron.right").frame(width: 44, height: 44)
+                }
+                .disabled(interval.contains(today))
+                .accessibilityLabel("Next month")
+            }
+            .tint(Theme.blue)
+
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 7), spacing: 6) {
+                ForEach(weekdays.indices, id: \.self) { i in
+                    Text(weekdays[i]).font(.caption.weight(.semibold)).foregroundStyle(Theme.muted)
+                }
+                ForEach(cells.indices, id: \.self) { i in
+                    if let day = cells[i] {
+                        DayCell(day: day, ml: totals[day] ?? 0, goal: model.goal(on: day),
+                                isToday: day == today, isFuture: day > today)
+                    } else {
+                        Color.clear.frame(height: 38)
+                    }
+                }
+            }
+
+            Text("Goal reached on \(reached) of \(past.count) days")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.ink)
+            Text("Stronger blue = closer to your goal · gray: no drinks logged")
+                .font(.caption)
+                .foregroundStyle(Theme.muted)
+        }
+    }
+
+    private func shift(_ months: Int) {
+        month = Calendar.current.date(byAdding: .month, value: months, to: month) ?? month
+    }
+}
+
+private struct DayCell: View {
+    let day: Date
+    let ml: Int
+    let goal: Int
+    let isToday: Bool
+    let isFuture: Bool
+
+    var body: some View {
+        let share = min(Double(ml) / Double(goal), 1)
+        let fill: Color = isFuture ? .clear : ml == 0 ? Theme.noData.opacity(0.35) : Theme.blue.opacity(0.2 + 0.8 * share)
+        let text: Color = isFuture ? Theme.muted.opacity(0.5) : ml > 0 && share > 0.5 ? .white : ml == 0 ? Theme.muted : Theme.ink
+
+        Text(day, format: .dateTime.day())
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(text)
+            .frame(maxWidth: .infinity)
+            .frame(height: 38)
+            .background(fill, in: Circle())
+            .overlay(Circle().stroke(Theme.navy, lineWidth: isToday ? 2 : 0))
+            .accessibilityLabel(day.formatted(.dateTime.day().month(.wide)) + (ml > 0 ? ", \(ml) ml" : ", no drinks"))
     }
 }
 

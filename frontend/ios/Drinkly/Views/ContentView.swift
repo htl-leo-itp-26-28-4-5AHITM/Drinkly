@@ -40,13 +40,18 @@ struct ContentView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             VStack(spacing: 10) {
                 if let toast = model.toast {
-                    Text(toast)
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .background(Theme.ink, in: Capsule())
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    Label {
+                        Text(toast).foregroundStyle(Theme.ink)
+                    } icon: {
+                        Image(systemName: "drop.circle.fill").foregroundStyle(Theme.blue)
+                    }
+                    .font(.subheadline.weight(.semibold))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 11)
+                    .background(.white, in: Capsule())
+                    .overlay(Capsule().stroke(Theme.water, lineWidth: 1))
+                    .shadow(color: Theme.navy.opacity(0.15), radius: 12, y: 4)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
                 TabBar(selection: $tab)
             }
@@ -79,7 +84,7 @@ private struct TabBar: View {
                     .background(selected ? Theme.sky : .clear, in: Capsule())
                     .contentShape(Capsule())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressable)
                 .accessibilityAddTraits(selected ? [.isSelected] : [])
             }
         }

@@ -1,3 +1,4 @@
+import Charts
 import SwiftUI
 
 struct ProfileView: View {
@@ -42,7 +43,6 @@ struct ProfileView: View {
                         step: 50
                     )
                     .tint(Theme.blue)
-                    Divider().overlay(Theme.line)
                     Stepper(value: $model.settings.weightKg, in: 30...200) {
                         HStack {
                             Text("Body weight").foregroundStyle(Theme.ink)
@@ -60,6 +60,13 @@ struct ProfileView: View {
                         .disabled(suggested == settings.goalMl)
                         .tint(Theme.blue)
                     }
+                }
+
+                Card(title: "Goal over time") {
+                    GoalHistoryChart(history: model.goalHistory, current: settings.goalMl, today: model.now)
+                    Text(goalHistoryText)
+                        .font(.footnote)
+                        .foregroundStyle(Theme.muted)
                 }
 
                 Card(title: "Bottle") {
@@ -105,6 +112,15 @@ struct ProfileView: View {
         .scrollDismissesKeyboard(.interactively)
     }
 
+    private var goalHistoryText: String {
+        let history = model.goalHistory
+        guard history.count > 1, let last = history.last else {
+            return "Your goal hasn't changed yet. When you change it, this line shows what it was before."
+        }
+        let previous = history[history.count - 2].goalMl
+        return "Changed from \(previous) to \(last.goalMl) ml on \(last.day.formatted(.dateTime.day().month(.wide)))."
+    }
+
     private var bottleStatus: String {
         switch model.bottle.link {
         case .connected: "Paired · battery \(model.bottle.batteryPercent ?? 0)%"
@@ -114,13 +130,62 @@ struct ProfileView: View {
     }
 
     private var serverColor: Color {
-        if model.errorMessage != nil { return Theme.warning }
-        return model.isLive ? Theme.success : Theme.muted
+        if model.errorMessage != nil { return Theme.noData }
+        return model.isLive ? Theme.blue : Theme.muted
     }
 
     private var serverText: String {
         if model.errorMessage != nil { return "Not reachable" }
         return model.isLive ? "Live connection" : "Connecting…"
+    }
+}
+
+/// Step line of the daily goal over the last weeks, so you can see what it used to be.
+private struct GoalHistoryChart: View {
+    let history: [GoalChange]
+    let current: Int
+    let today: Date
+
+    private struct Point: Identifiable {
+        let day: Date
+        let goalMl: Int
+        var id: Date { day }
+    }
+
+    var body: some View {
+        let calendar = Calendar.current
+        let end = calendar.startOfDay(for: today)
+        let start = min(calendar.date(byAdding: .day, value: -30, to: end)!, history.first?.day ?? end)
+        let points = [Point(day: start, goalMl: Hydration.goal(on: start, history: history, fallback: current))]
+            + history.filter { $0.day > start && $0.day < end }.map { Point(day: $0.day, goalMl: $0.goalMl) }
+            + [Point(day: end, goalMl: current)]
+        let top = Double(points.map(\.goalMl).max() ?? current) * 1.25
+
+        Chart(points) { point in
+            AreaMark(x: .value("Day", point.day), y: .value("Goal", Double(point.goalMl)))
+                .interpolationMethod(.stepEnd)
+                .foregroundStyle(Theme.blue.opacity(0.12))
+            LineMark(x: .value("Day", point.day), y: .value("Goal", Double(point.goalMl)))
+                .interpolationMethod(.stepEnd)
+                .foregroundStyle(Theme.blue)
+                .lineStyle(StrokeStyle(lineWidth: 2))
+        }
+        .chartYScale(domain: 0...top)
+        .chartYAxis {
+            AxisMarks(position: .leading, values: .stride(by: 1000)) { value in
+                AxisGridLine().foregroundStyle(Theme.line)
+                AxisValueLabel {
+                    Text(HydrationScene.liters(Int(value.as(Double.self) ?? 0))).foregroundStyle(Theme.muted)
+                }
+            }
+        }
+        .chartXAxis {
+            AxisMarks(values: .automatic(desiredCount: 4)) { _ in
+                AxisValueLabel(format: .dateTime.day().month(.abbreviated))
+            }
+        }
+        .frame(height: 130)
+        .accessibilityLabel("Daily goal over time, currently \(current) ml")
     }
 }
 
