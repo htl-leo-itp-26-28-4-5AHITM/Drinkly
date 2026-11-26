@@ -91,7 +91,7 @@ object Hydration {
         if (!detectWakeUp) return fixed
         val earliest = now.toLocalDate().atTime(EARLIEST_DAY_START_HOUR, 0)
         val signs = entries.map { LocalDateTime.ofInstant(it.timestamp, zone) } + listOfNotNull(firstActive)
-        return signs.filter { !it.isBefore(earliest) && !it.isAfter(now) }.minOrNull() ?: fixed
+        return signs.filter { !it.isBefore(earliest) && it.toLocalDate() == now.toLocalDate() }.minOrNull() ?: fixed
     }
 
     /** How much should have been drunk by [now] if the goal is spread evenly between [start] and the sleep hour. */
@@ -107,10 +107,12 @@ object Hydration {
         return (goalMl * fraction).roundToInt()
     }
 
-    /** Millilitres drunk in the hour before [now]. */
+    /**
+     * Millilitres drunk in the hour before [now]. No upper bound: the server stamps the drinks,
+     * and its clock may run slightly ahead of the phone's.
+     */
     fun lastHour(entries: List<DrinkEntry>, now: Instant): Int =
-        entries.filter { it.timestamp.isAfter(now.minus(Duration.ofHours(1))) && !it.timestamp.isAfter(now) }
-            .sumOf { it.milliliters }
+        entries.filter { it.timestamp.isAfter(now.minus(Duration.ofHours(1))) }.sumOf { it.milliliters }
 
     fun status(todayMl: Int, goalMl: Int, expectedMl: Int, lastHourMl: Int): HydrationStatus = when {
         lastHourMl > MAX_PER_HOUR_ML || todayMl >= goalMl * TOO_MUCH_FACTOR -> HydrationStatus.TOO_MUCH
@@ -134,7 +136,7 @@ object Hydration {
                 if (streak > 1) "Well done, that's $streak days in a row!" else "Well done! Come back tomorrow.",
             )
             HydrationStatus.ON_TRACK -> if (todayMl == 0) {
-                HydrationMessage(status, "Good morning", "Start your day with a glass of water.")
+                HydrationMessage(status, "Let's get started", "A glass of water is a good first step.")
             } else {
                 HydrationMessage(status, "On track", "${goalMl - todayMl} ml to go today.")
             }

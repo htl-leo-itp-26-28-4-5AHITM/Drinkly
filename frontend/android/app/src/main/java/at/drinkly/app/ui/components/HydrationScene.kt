@@ -58,7 +58,7 @@ fun HydrationScene(fill: Float, goalMl: Int, water: Color, topInset: Dp, bottomI
     Canvas(modifier) {
         val scale = SceneScale(
             floor = size.height - bottomInset.toPx() - 30.dp.toPx(),
-            extra = 10.dp.toPx(),
+            extra = 22.dp.toPx(),
             top = topInset.toPx() + 80.dp.toPx(),
         )
         drawRect(Brush.verticalGradient(listOf(Color.White, DrinklyColors.Sky)))
