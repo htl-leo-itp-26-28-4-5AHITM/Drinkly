@@ -9,6 +9,9 @@ enum Hydration {
     /// Drinks and app use before this hour still belong to the night, not to a new day.
     static let earliestDayStartHour = 4
 
+    /// Day of the initial goal-history entry, so the first real change keeps the earlier goal.
+    static let sinceAlways = Calendar.current.date(from: DateComponents(year: 2000, month: 1, day: 1))!
+
     /// Millilitres per day, keyed by the start of the day.
     static func dailyTotals(_ entries: [DrinkEntry], calendar: Calendar = .current) -> [Date: Int] {
         Dictionary(grouping: entries) { calendar.startOfDay(for: $0.timestamp) }

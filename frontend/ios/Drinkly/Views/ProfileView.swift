@@ -155,7 +155,8 @@ private struct GoalHistoryChart: View {
     var body: some View {
         let calendar = Calendar.current
         let end = calendar.startOfDay(for: today)
-        let start = min(calendar.date(byAdding: .day, value: -30, to: end)!, history.first?.day ?? end)
+        // Last 30 days, or back to the first real change (the first entry is the "since always" goal)
+        let start = min(calendar.date(byAdding: .day, value: -30, to: end)!, history.dropFirst().first?.day ?? end)
         let points = [Point(day: start, goalMl: Hydration.goal(on: start, history: history, fallback: current))]
             + history.filter { $0.day > start && $0.day < end }.map { Point(day: $0.day, goalMl: $0.goalMl) }
             + [Point(day: end, goalMl: current)]

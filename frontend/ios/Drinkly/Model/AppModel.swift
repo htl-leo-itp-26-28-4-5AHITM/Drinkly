@@ -40,7 +40,7 @@ final class AppModel: ObservableObject {
            let saved = try? JSONDecoder().decode([GoalChange].self, from: data), !saved.isEmpty {
             goalHistory = saved
         } else {
-            goalHistory = [GoalChange(day: Calendar.current.startOfDay(for: .now), goalMl: settings.goalMl)]
+            goalHistory = [GoalChange(day: Hydration.sinceAlways, goalMl: settings.goalMl)]
         }
         firstActive = defaults.object(forKey: Self.firstActiveKey) as? Date
         markActive()
