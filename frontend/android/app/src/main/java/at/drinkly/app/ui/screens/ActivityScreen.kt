@@ -256,7 +256,7 @@ private fun StatTile(label: String, value: String, modifier: Modifier = Modifier
     Column(
         modifier
             .clip(RoundedCornerShape(22.dp))
-            .background(Color.White)
+            .background(DrinklyColors.Card)
             .padding(16.dp),
     ) {
         Text(label, fontSize = 13.sp, color = DrinklyColors.Muted)
@@ -268,7 +268,7 @@ private fun StatTile(label: String, value: String, modifier: Modifier = Modifier
 private fun BarChart(days: List<LocalDate>, values: List<Int>, goals: List<Int>, modifier: Modifier = Modifier) {
     val measurer = rememberTextMeasurer()
     val labelStyle = TextStyle(fontSize = 11.sp, color = DrinklyColors.Ink)
-    val goalStyle = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+    val goalStyle = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Card)
     val weekdayFormat = DateTimeFormatter.ofPattern("EEE")
     val dayMonthFormat = DateTimeFormatter.ofPattern("d MMM")
 

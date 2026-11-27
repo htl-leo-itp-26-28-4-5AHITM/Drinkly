@@ -157,7 +157,7 @@ private fun PlanCard(plan: ReminderPlan, selected: Boolean, onClick: () -> Unit)
             .fillMaxWidth()
             .pressScale(source)
             .clip(shape)
-            .background(Color.White)
+            .background(DrinklyColors.Card)
             .border(2.dp, if (selected) DrinklyColors.Blue else Color.Transparent, shape)
             .selectable(selected, interactionSource = source, indication = ripple(), role = Role.RadioButton, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 12.dp),

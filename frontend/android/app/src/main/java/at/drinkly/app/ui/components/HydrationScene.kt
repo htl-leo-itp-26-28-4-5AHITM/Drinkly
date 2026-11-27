@@ -45,7 +45,7 @@ fun HydrationScene(fill: Float, water: Color, modifier: Modifier = Modifier) {
             zero = size.height + 12.dp.toPx(), // empty water hides below the screen
             full = statusBar.toPx() + 24.dp.toPx(), // at the goal the wave still shows just below the status bar
         )
-        drawRect(Brush.verticalGradient(listOf(Color.White, DrinklyColors.Sky)))
+        drawRect(Brush.verticalGradient(listOf(DrinklyColors.Card, DrinklyColors.Sky)))
 
         val top = scale.y(fill)
         drawPath(wave(top, phase + PI.toFloat() * 0.8f, 8.dp.toPx()), water.copy(alpha = 0.55f))

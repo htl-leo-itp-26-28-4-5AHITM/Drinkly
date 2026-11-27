@@ -157,9 +157,9 @@ private fun Toast(message: String) {
     val shape = RoundedCornerShape(50)
     Row(
         Modifier
-            .shadow(12.dp, shape, ambientColor = DrinklyColors.Navy, spotColor = DrinklyColors.Navy.copy(alpha = 0.25f))
+            .shadow(12.dp, shape, ambientColor = DrinklyColors.Shadow, spotColor = DrinklyColors.Shadow.copy(alpha = 0.25f))
             .clip(shape)
-            .background(Color.White)
+            .background(DrinklyColors.Card)
             .border(1.dp, DrinklyColors.Water, shape)
             .padding(horizontal = 16.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -177,9 +177,9 @@ private fun AddedNotice(drink: AddedDrink, onUndo: () -> Unit) {
     val amount = liters(drink.entry.milliliters)
     Row(
         Modifier
-            .shadow(8.dp, shape, ambientColor = DrinklyColors.Navy.copy(alpha = 0.15f), spotColor = DrinklyColors.Navy.copy(alpha = 0.15f))
+            .shadow(8.dp, shape, ambientColor = DrinklyColors.Shadow.copy(alpha = 0.15f), spotColor = DrinklyColors.Shadow.copy(alpha = 0.15f))
             .clip(shape)
-            .background(Color.White.copy(alpha = 0.96f))
+            .background(DrinklyColors.Card.copy(alpha = 0.96f))
             .padding(start = 14.dp, end = 2.dp)
             .semantics { liveRegion = LiveRegionMode.Polite },
         verticalAlignment = Alignment.CenterVertically,
@@ -210,9 +210,9 @@ private fun BottomBar(selected: Tab, onSelect: (Tab) -> Unit, modifier: Modifier
     Row(
         modifier
             .fillMaxWidth()
-            .shadow(16.dp, shape, ambientColor = DrinklyColors.Navy, spotColor = DrinklyColors.Navy.copy(alpha = 0.3f))
+            .shadow(16.dp, shape, ambientColor = DrinklyColors.Shadow, spotColor = DrinklyColors.Shadow.copy(alpha = 0.3f))
             .clip(shape)
-            .background(Color.White)
+            .background(DrinklyColors.Card)
             .padding(6.dp)
             .selectableGroup(),
     ) {

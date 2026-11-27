@@ -122,18 +122,21 @@ fun TodayScreen(
 
     // On opening the app the number counts up from 0 and the water rises with it
     val intro = remember { Animatable(if (playIntro) 0f else 1f) }
+    var introRunning by remember { mutableStateOf(false) }
     val hasEntries by rememberUpdatedState(d.entries.isNotEmpty())
     LaunchedEffect(playIntro) {
         if (!playIntro) return@LaunchedEffect
         intro.snapTo(0f)
+        introRunning = true
         // On a cold start, wait briefly for the first load so it doesn't count up to 0
         withTimeoutOrNull(2000) { snapshotFlow { hasEntries }.first { it } }
         fill.snapTo(progress)
         intro.animateTo(1f, tween(durationMillis = 1200, easing = EaseOutCubic))
         onIntroPlayed()
+        introRunning = false
     }
-    // Start from 0 in the very frame the intro is requested (the reset in the effect only lands a frame later)
-    val introFactor = if (playIntro && intro.value == 1f) 0f else intro.value
+    // While an intro is requested but hasn't started yet (the effect runs a frame later), show 0, not the old value
+    val introFactor = if (playIntro && !introRunning) 0f else intro.value
     val shownMl = (animatedMl * introFactor).roundToInt()
 
     Box(Modifier.fillMaxSize()) {
@@ -205,9 +208,9 @@ fun TodayScreen(
                 .padding(bottom = 92.dp + 32.dp)
                 .pressScale(source)
                 .size(72.dp)
-                .shadow(16.dp, CircleShape, ambientColor = DrinklyColors.Navy, spotColor = DrinklyColors.Navy.copy(alpha = 0.35f)),
+                .shadow(16.dp, CircleShape, ambientColor = DrinklyColors.Shadow, spotColor = DrinklyColors.Shadow.copy(alpha = 0.35f)),
             shape = CircleShape,
-            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = DrinklyColors.Blue),
+            colors = ButtonDefaults.buttonColors(containerColor = DrinklyColors.Card, contentColor = DrinklyColors.Blue),
             contentPadding = PaddingValues(0.dp),
         ) {
             Icon(Icons.Rounded.Add, contentDescription = "Add a drink", modifier = Modifier.size(36.dp))
@@ -215,7 +218,7 @@ fun TodayScreen(
     }
 
     if (showAddSheet) {
-        ModalBottomSheet(onDismissRequest = { showAddSheet = false }, containerColor = Color.White) {
+        ModalBottomSheet(onDismissRequest = { showAddSheet = false }, containerColor = DrinklyColors.Card) {
             AddDrinkSheet(d.todayMl, d.settings.goalMl, d.lastHourMl, onAdd = { ml ->
                 onAdd(ml)
                 showAddSheet = false
@@ -240,9 +243,9 @@ private fun StatusCard(message: HydrationMessage, streak: Int) {
     Row(
         Modifier
             .fillMaxWidth()
-            .shadow(12.dp, shape, ambientColor = DrinklyColors.Navy.copy(alpha = 0.2f), spotColor = DrinklyColors.Navy.copy(alpha = 0.2f))
+            .shadow(12.dp, shape, ambientColor = DrinklyColors.Shadow.copy(alpha = 0.2f), spotColor = DrinklyColors.Shadow.copy(alpha = 0.2f))
             .clip(shape)
-            .background(Color.White.copy(alpha = 0.95f))
+            .background(DrinklyColors.Card.copy(alpha = 0.95f))
             .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -321,9 +324,9 @@ private fun BottlePill(bottle: BottleState, onClick: () -> Unit) {
     val shape = RoundedCornerShape(50)
     Row(
         Modifier
-            .shadow(18.dp, shape, ambientColor = DrinklyColors.Navy.copy(alpha = 0.6f), spotColor = DrinklyColors.Navy.copy(alpha = 0.6f))
+            .shadow(18.dp, shape, ambientColor = DrinklyColors.Shadow.copy(alpha = 0.6f), spotColor = DrinklyColors.Shadow.copy(alpha = 0.6f))
             .pressable(shape, onClick = onClick)
-            .background(Color.White)
+            .background(DrinklyColors.Card)
             .padding(horizontal = 12.dp, vertical = 9.dp)
             .clearAndSetSemantics {
                 contentDescription = "${bottle.name}: $text, tap to " + if (bottle.link == BottleLink.DISCONNECTED) "connect" else "disconnect"
@@ -419,7 +422,7 @@ private fun AddDrinkSheet(todayMl: Int, goalMl: Int, lastHourMl: Int, onAdd: (In
                                 .width(260.dp)
                                 .shadow(12.dp, RoundedCornerShape(16.dp))
                                 .clip(RoundedCornerShape(16.dp))
-                                .background(Color.White)
+                                .background(DrinklyColors.Card)
                                 .padding(14.dp),
                             fontSize = 14.sp,
                             color = DrinklyColors.Ink,

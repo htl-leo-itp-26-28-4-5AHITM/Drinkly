@@ -8,7 +8,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import at.drinkly.app.ui.theme.DrinklyColors
 
 /** A simple drawing of the Drinkly smart bottle. */
 @Composable
@@ -30,7 +29,7 @@ fun BottleIllustration(modifier: Modifier = Modifier, dimmed: Boolean = false) {
         // body
         drawRoundRect(
             brush = Brush.horizontalGradient(
-                listOf(Color(0xFF3B5D93), DrinklyColors.Navy, Color(0xFF203A63)),
+                listOf(Color(0xFF3B5D93), Color(0xFF2B4775), Color(0xFF203A63)),
             ),
             topLeft = Offset(0f, capH * 0.9f),
             size = Size(w, h - capH * 0.9f),
