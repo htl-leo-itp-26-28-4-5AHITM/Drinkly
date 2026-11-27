@@ -217,7 +217,6 @@ private fun CalendarCard(d: Dashboard, month: YearMonth, onMonth: (YearMonth) ->
         }
         Spacer(Modifier.height(10.dp))
         Text("Goal reached on $reached of ${past.size} days", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
-        Text("Stronger blue = closer to your goal · gray: no drinks logged", fontSize = 12.sp, color = DrinklyColors.Muted)
         Spacer(Modifier.height(16.dp))
         footer()
     }
