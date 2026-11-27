@@ -96,11 +96,6 @@ fun RemindersScreen(d: Dashboard, onUpdate: ((AppSettings) -> AppSettings) -> Un
         SectionCard("Active hours") {
             HourStepper("From", s.wakeHour, 4..(s.sleepHour - 1)) { h -> onUpdate { it.copy(wakeHour = h) } }
             HourStepper("Until", s.sleepHour, (s.wakeHour + 1)..24) { h -> onUpdate { it.copy(sleepHour = h) } }
-            Spacer(Modifier.height(6.dp))
-            Text(
-                "Reminders only arrive in this window, and your daily goal is spread across it.",
-                fontSize = 13.sp, color = DrinklyColors.Muted,
-            )
         }
 
         SectionCard {
