@@ -160,13 +160,12 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
                 interactionSource = source,
                 modifier = Modifier
                     .pressScale(source)
-                    .height(54.dp)
-                    .shadow(10.dp, RoundedCornerShape(50), spotColor = DrinklyColors.Blue.copy(alpha = 0.5f)),
-                contentPadding = PaddingValues(horizontal = 28.dp),
+                    .size(64.dp)
+                    .shadow(10.dp, CircleShape, spotColor = DrinklyColors.Blue.copy(alpha = 0.5f)),
+                shape = CircleShape,
+                contentPadding = PaddingValues(0.dp),
             ) {
-                Icon(Icons.Rounded.Add, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Add a drink", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                Icon(Icons.Rounded.Add, contentDescription = "Add a drink", modifier = Modifier.size(32.dp))
             }
 
             Spacer(Modifier.weight(1f))
@@ -257,7 +256,7 @@ private fun ConnectionPill(d: Dashboard, onClick: () -> Unit) {
     val shape = RoundedCornerShape(50)
     Row(
         Modifier
-            .shadow(8.dp, shape, ambientColor = DrinklyColors.Navy.copy(alpha = 0.2f), spotColor = DrinklyColors.Navy.copy(alpha = 0.2f))
+            .shadow(16.dp, shape, ambientColor = DrinklyColors.Navy.copy(alpha = 0.4f), spotColor = DrinklyColors.Navy.copy(alpha = 0.4f))
             .pressable(shape, onClick = onClick)
             .background(Color.White)
             .padding(horizontal = 12.dp, vertical = 9.dp)
