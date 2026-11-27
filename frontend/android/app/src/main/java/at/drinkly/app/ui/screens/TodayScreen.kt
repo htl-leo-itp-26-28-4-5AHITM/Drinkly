@@ -105,7 +105,6 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
     Box(Modifier.fillMaxSize()) {
         HydrationScene(
             fill = fill,
-            goalMl = d.settings.goalMl,
             water = water,
             topInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
             modifier = Modifier.fillMaxSize(),

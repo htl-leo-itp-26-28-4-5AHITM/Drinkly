@@ -9,36 +9,26 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.text.TextMeasurer
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import at.drinkly.app.data.liters
 import at.drinkly.app.ui.theme.DrinklyColors
 import kotlin.math.PI
-import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.sin
 
 private const val MAX_SHARE = 1.25f
 
 /**
- * The Today background: water rising from the bottom edge (empty = nothing drunk yet) and a faint
- * measuring scale on the right edge.
+ * The Today background: water rising from the bottom edge (empty = nothing drunk yet).
  *
- * [fill] is today's intake divided by the goal; [topInset] keeps the scale clear of the status bar.
+ * [fill] is today's intake divided by the goal; [topInset] keeps the water below the status bar.
  */
 @Composable
-fun HydrationScene(fill: Float, goalMl: Int, water: Color, topInset: Dp, modifier: Modifier = Modifier) {
+fun HydrationScene(fill: Float, water: Color, topInset: Dp, modifier: Modifier = Modifier) {
     val transition = rememberInfiniteTransition(label = "wave")
     val phase by transition.animateFloat(
         initialValue = 0f,
@@ -46,7 +36,6 @@ fun HydrationScene(fill: Float, goalMl: Int, water: Color, topInset: Dp, modifie
         animationSpec = infiniteRepeatable(tween(7000, easing = LinearEasing)),
         label = "phase",
     )
-    val measurer = rememberTextMeasurer()
 
     Canvas(modifier) {
         val scale = SceneScale(
@@ -59,7 +48,6 @@ fun HydrationScene(fill: Float, goalMl: Int, water: Color, topInset: Dp, modifie
         drawPath(wave(top, phase + PI.toFloat() * 0.8f, 8.dp.toPx()), water.copy(alpha = 0.55f))
         drawPath(wave(top, phase, 10.dp.toPx()), water)
 
-        drawRuler(scale, goalMl, measurer)
     }
 }
 
@@ -78,34 +66,4 @@ private fun DrawScope.wave(top: Float, phase: Float, amplitude: Float) = Path().
     lineTo(size.width, top + amplitude * sin(2f * PI.toFloat() + phase))
     lineTo(size.width, size.height)
     close()
-}
-
-/** Faint ticks every 250 ml (500 ml for big goals), labelled every 500 ml (1 l), with the goal highlighted. */
-private fun DrawScope.drawRuler(scale: SceneScale, goalMl: Int, measurer: TextMeasurer) {
-    val x = size.width - 12.dp.toPx()
-    val step = if (goalMl > 2500) 500 else 250
-    val labelEvery = step * 2
-    val maxMl = (goalMl * MAX_SHARE).toInt()
-    val color = DrinklyColors.Navy.copy(alpha = 0.28f)
-    val labelStyle = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.Medium, color = DrinklyColors.Muted.copy(alpha = 0.7f))
-
-    fun label(text: String, y: Float, gap: Float, style: TextStyle) {
-        val layout = measurer.measure(text, style)
-        drawText(layout, topLeft = Offset(x - gap - layout.size.width, y - layout.size.height / 2f))
-    }
-
-    drawLine(color, Offset(x, scale.zero), Offset(x, scale.y(MAX_SHARE)), strokeWidth = 1.dp.toPx())
-    for (ml in step..maxMl step step) {
-        val y = scale.y(ml.toFloat() / goalMl)
-        val major = ml % labelEvery == 0
-        drawLine(color, Offset(x - (if (major) 12 else 6).dp.toPx(), y), Offset(x, y), strokeWidth = 1.dp.toPx())
-        if (major && abs(ml - goalMl) >= step) label(liters(ml), y, 16.dp.toPx(), labelStyle)
-    }
-
-    val goalY = scale.y(1f)
-    drawLine(DrinklyColors.Blue.copy(alpha = 0.6f), Offset(x - 18.dp.toPx(), goalY), Offset(x, goalY), strokeWidth = 2.dp.toPx())
-    label(
-        "Goal ${liters(goalMl)}", goalY, 22.dp.toPx(),
-        labelStyle.copy(fontWeight = FontWeight.SemiBold, color = DrinklyColors.Blue.copy(alpha = 0.8f)),
-    )
 }
