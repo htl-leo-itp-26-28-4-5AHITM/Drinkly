@@ -57,7 +57,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
@@ -136,9 +135,9 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
             )
         }
 
-        // Hero: the streak as a small eyebrow above today's amount, a bit above the middle
+        // Hero: streak, today's amount and the last drink, together in the vertical middle of the screen
         Column(
-            Modifier.align(BiasAlignment(horizontalBias = 0f, verticalBias = -0.25f)),
+            Modifier.align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             StreakLine(d.streak)
