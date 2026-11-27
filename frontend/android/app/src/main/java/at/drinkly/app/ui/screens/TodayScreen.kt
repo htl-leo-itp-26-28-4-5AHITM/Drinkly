@@ -8,6 +8,12 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.Path
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -33,7 +39,6 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CloudDone
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.CloudSync
-import androidx.compose.material.icons.rounded.LocalDrink
 import androidx.compose.material.icons.rounded.LocalFireDepartment
 import androidx.compose.material.icons.rounded.PanTool
 import androidx.compose.material.icons.rounded.Verified
@@ -324,8 +329,43 @@ private fun SyncButton(d: Dashboard, onRefresh: () -> Unit) {
     }
 }
 
+/** A plain outlined glass, filled up to [level] (0..1). */
+@Composable
+private fun GlassIcon(level: Float) {
+    Canvas(Modifier.size(width = 20.dp, height = 24.dp)) {
+        val stroke = 2.dp.toPx()
+        val inset = stroke / 2
+        val top = inset
+        val bottom = size.height - inset
+        val topLeft = inset
+        val topRight = size.width - inset
+        val taper = size.width * 0.14f
+        fun leftAt(y: Float) = topLeft + taper * (y - top) / (bottom - top)
+        fun rightAt(y: Float) = topRight - taper * (y - top) / (bottom - top)
+
+        val waterTop = bottom - (bottom - top) * level
+        val water = Path().apply {
+            moveTo(leftAt(waterTop), waterTop)
+            lineTo(rightAt(waterTop), waterTop)
+            lineTo(rightAt(bottom), bottom)
+            lineTo(leftAt(bottom), bottom)
+            close()
+        }
+        drawPath(water, DrinklyColors.Blue.copy(alpha = 0.3f))
+
+        val glass = Path().apply {
+            moveTo(topLeft, top)
+            lineTo(leftAt(bottom), bottom)
+            lineTo(rightAt(bottom), bottom)
+            lineTo(topRight, top)
+        }
+        drawPath(glass, DrinklyColors.Blue, style = Stroke(width = stroke, cap = StrokeCap.Round, join = StrokeJoin.Round))
+    }
+}
+
 private val presets = listOf("Cup" to 150, "Glass" to 250, "Can" to 330, "Bottle" to 500)
 
+@OptIn(ExperimentalMaterial3Api::class) // SliderDefaults.Track without the tick dots
 @Composable
 private fun AddDrinkSheet(todayMl: Int, goalMl: Int, lastHourMl: Int, onAdd: (Int) -> Unit) {
     var amount by rememberSaveable { mutableFloatStateOf(200f) }
@@ -381,7 +421,8 @@ private fun AddDrinkSheet(todayMl: Int, goalMl: Int, lastHourMl: Int, onAdd: (In
                         .clearAndSetSemantics { contentDescription = "Add $name, ${liters(ml)}" },
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Icon(Icons.Rounded.LocalDrink, contentDescription = null, tint = DrinklyColors.Blue)
+                    GlassIcon(level = (ml / 600f).coerceAtMost(0.85f))
+                    Spacer(Modifier.height(6.dp))
                     Text(liters(ml), fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
                     Text(name, fontSize = 12.sp, color = DrinklyColors.Muted)
                 }
@@ -397,8 +438,9 @@ private fun AddDrinkSheet(todayMl: Int, goalMl: Int, lastHourMl: Int, onAdd: (In
             value = amount,
             onValueChange = { amount = it },
             valueRange = 50f..1000f,
-            steps = 18, // 50 ml steps
+            steps = 18, // snaps to 50 ml, but without drawing the tick dots
             modifier = Modifier.semantics { contentDescription = "Amount, ${liters(custom)}" },
+            track = { state -> SliderDefaults.Track(state, drawStopIndicator = null, drawTick = { _, _ -> }) },
         )
         Row {
             Text(liters(50), Modifier.weight(1f), fontSize = 12.sp, color = DrinklyColors.Muted)
