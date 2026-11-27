@@ -80,9 +80,10 @@ class DrinklyApi(private val baseUrl: () -> String) {
     private fun request(method: String, path: String, body: String? = null): String {
         val conn = open(method, path)
         try {
+            // Always JSON: without it Android sends a form type on DELETE and the backend answers 415
+            conn.setRequestProperty("Content-Type", "application/json")
             if (body != null) {
                 conn.doOutput = true
-                conn.setRequestProperty("Content-Type", "application/json")
                 conn.outputStream.use { it.write(body.toByteArray()) }
             }
             val code = conn.responseCode
