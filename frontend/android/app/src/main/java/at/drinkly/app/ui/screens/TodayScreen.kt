@@ -57,6 +57,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -128,6 +129,9 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
                 Modifier.semantics(mergeDescendants = true) {},
                 verticalAlignment = Alignment.Bottom,
             ) {
+                // Invisible twin of the unit on the left, so the number itself is centred above the plus
+                Text("L", Modifier.alignByBaseline().alpha(0f).clearAndSetSemantics {}, fontSize = 40.sp, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.width(6.dp))
                 Text(
                     litersValue(shownMl),
                     Modifier.alignByBaseline(),
