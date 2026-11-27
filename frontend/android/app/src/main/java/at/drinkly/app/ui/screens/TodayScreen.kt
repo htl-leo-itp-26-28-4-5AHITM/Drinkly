@@ -165,8 +165,8 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
             }
         }
 
-        // The streak sits in the lower third
-        Box(Modifier.align(BiasAlignment(horizontalBias = 0f, verticalBias = 0.6f))) {
+        // The streak sits in the upper third
+        Box(Modifier.align(BiasAlignment(horizontalBias = 0f, verticalBias = -0.6f))) {
             BigStreak(d.streak)
         }
     }
