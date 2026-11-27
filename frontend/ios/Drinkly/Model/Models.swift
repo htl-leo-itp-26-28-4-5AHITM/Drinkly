@@ -82,6 +82,12 @@ struct AppSettings: Codable, Equatable {
     }
 }
 
+/// A drink that was just saved, by hand or measured by the bottle.
+struct AddedDrink: Equatable {
+    let entry: DrinkEntry
+    let fromBottle: Bool
+}
+
 /// The daily goal from `day` on, so past days are judged by the goal that applied back then.
 struct GoalChange: Codable, Equatable {
     let day: Date

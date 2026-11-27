@@ -23,22 +23,27 @@ struct DrinklyAPI {
 
     func entries(for username: String) async throws -> [DrinkEntry] {
         let data = try await send(request("GET", "/entries/" + encode(username)))
-        return try JSONDecoder().decode([Record].self, from: data).map { record in
-            DrinkEntry(
-                id: record.id,
-                timestamp: record.timestamp.flatMap(Self.parseDate) ?? .now,
-                liters: record.drinkingAmount
-            )
-        }
+        return try JSONDecoder().decode([Record].self, from: data).map(Self.entry)
     }
 
-    func add(username: String, milliliters: Int) async throws {
+    /// Saves a drink and returns it as stored, so it can be undone by its id.
+    @discardableResult
+    func add(username: String, milliliters: Int) async throws -> DrinkEntry {
         var req = try request("POST", "/entries")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONEncoder().encode(
             NewRecord(user: .init(username: username), drinkingAmount: Double(milliliters) / 1000)
         )
-        _ = try await send(req)
+        let data = try await send(req)
+        return Self.entry(try JSONDecoder().decode(Record.self, from: data))
+    }
+
+    private static func entry(_ record: Record) -> DrinkEntry {
+        DrinkEntry(
+            id: record.id,
+            timestamp: record.timestamp.flatMap(parseDate) ?? .now,
+            liters: record.drinkingAmount
+        )
     }
 
     func delete(id: Int) async throws {

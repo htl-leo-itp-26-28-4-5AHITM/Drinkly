@@ -36,7 +36,7 @@ enum ReminderScheduler {
 
                 let content = UNMutableNotificationContent()
                 content.title = "Time for a sip"
-                content.body = "Stay on track for your \(settings.goalMl) ml goal."
+                content.body = "Stay on track for your \(Liters.text(settings.goalMl)) goal."
                 content.sound = .default
 
                 let parts = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: slot)
@@ -51,7 +51,7 @@ enum ReminderScheduler {
         await requestPermission()
         let content = UNMutableNotificationContent()
         content.title = "Time for a sip"
-        content.body = "You're at \(todayMl) of \(goalMl) ml today."
+        content.body = "You're at \(Liters.value(todayMl)) of \(Liters.text(goalMl)) today."
         content.sound = .default
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 2, repeats: false)
         try? await UNUserNotificationCenter.current()

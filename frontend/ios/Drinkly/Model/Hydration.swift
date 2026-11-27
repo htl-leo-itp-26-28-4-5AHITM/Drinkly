@@ -114,10 +114,10 @@ enum Hydration {
         switch status {
         case .tooMuch where lastHourMl > maxPerHourMl:
             return .init(status: status, title: "Slow down",
-                         detail: "\(lastHourMl) ml in the last hour. Your body can take about 1 l per hour.")
+                         detail: "\(Liters.text(lastHourMl)) in the last hour. Your body can take about 1 L per hour.")
         case .tooMuch:
             return .init(status: status, title: "That's plenty",
-                         detail: "You're \(todayMl - goalMl) ml over your goal. No need for more today.")
+                         detail: "You're \(Liters.text(todayMl - goalMl)) over your goal. No need for more today.")
         case .goalReached:
             return .init(status: status, title: "Goal reached",
                          detail: streak > 1 ? "Well done, that's \(streak) days in a row!" : "Well done! Come back tomorrow.")
@@ -125,11 +125,11 @@ enum Hydration {
             return .init(status: status, title: "Let's get started",
                          detail: "A glass of water is a good first step.")
         case .onTrack:
-            return .init(status: status, title: "On track", detail: "\(goalMl - todayMl) ml to go today.")
+            return .init(status: status, title: "On track", detail: "\(Liters.text(goalMl - todayMl)) to go today.")
         case .slightlyBehind:
-            return .init(status: status, title: "A little behind", detail: "Drink about \(behind) ml to catch up.")
+            return .init(status: status, title: "A little behind", detail: "Drink about \(Liters.text(behind)) to catch up.")
         case .behind:
-            return .init(status: status, title: "Time for a drink", detail: "You're \(behind) ml behind your pace.")
+            return .init(status: status, title: "Time for a drink", detail: "You're \(Liters.text(behind)) behind your pace.")
         }
     }
 

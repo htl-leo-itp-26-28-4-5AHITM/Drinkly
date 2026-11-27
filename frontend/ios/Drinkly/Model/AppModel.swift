@@ -14,6 +14,12 @@ final class AppModel: ObservableObject {
     @Published private(set) var bottle = BottleState()
     @Published private(set) var now = Date.now
     @Published var toast: String?
+    /// A drink that was just saved, for the "Added 0.25 L · Undo" notice at the top.
+    @Published private(set) var added: AddedDrink?
+    /// Changes every time the app comes to the foreground; Today then counts its number up once.
+    @Published private(set) var introRequest = UUID()
+    /// The request Today has already played, so switching tabs doesn't replay it.
+    @Published var introPlayed: UUID?
     /// Goal changes over time, oldest first.
     @Published private(set) var goalHistory: [GoalChange] = []
     /// The first time the app was opened today, used to detect when the day started.
@@ -23,6 +29,7 @@ final class AppModel: ObservableObject {
     private var liveTask: Task<Void, Never>?
     private var clockTask: Task<Void, Never>?
     private var toastTask: Task<Void, Never>?
+    private var addedTask: Task<Void, Never>?
 
     private static let settingsKey = "settings"
     private static let goalHistoryKey = "goalHistory"
@@ -94,14 +101,33 @@ final class AppModel: ObservableObject {
         Task { await load() }
     }
 
+    /// Called when the app comes back to the foreground.
+    func requestIntro() {
+        introRequest = UUID()
+    }
+
     func addDrink(milliliters: Int, fromBottle: Bool = false) {
         Task {
             do {
-                try await api.add(username: settings.username, milliliters: milliliters)
+                let entry = try await api.add(username: settings.username, milliliters: milliliters)
                 await load()
-                show(fromBottle ? "Bottle synced \(milliliters) ml" : "Added \(milliliters) ml")
+                showAdded(AddedDrink(entry: entry, fromBottle: fromBottle))
             } catch {
                 show("Couldn't save the drink.")
+            }
+        }
+    }
+
+    /// Takes back a drink from the notice, quietly unless it fails.
+    func undo(_ drink: AddedDrink) {
+        addedTask?.cancel()
+        withAnimation(.snappy) { added = nil }
+        Task {
+            do {
+                try await api.delete(id: drink.entry.id)
+                await load()
+            } catch {
+                show("Couldn't undo the drink.")
             }
         }
     }
@@ -111,7 +137,7 @@ final class AppModel: ObservableObject {
             do {
                 try await api.delete(id: entry.id)
                 await load()
-                show("Removed \(entry.milliliters) ml")
+                show("Removed \(Liters.text(entry.milliliters))")
             } catch {
                 show("Couldn't remove the drink.")
             }
@@ -205,6 +231,16 @@ final class AppModel: ObservableObject {
         let todayMl = todayMl
         let dayStart = dayStart
         Task { await ReminderScheduler.reschedule(settings: settings, todayMl: todayMl, dayStart: dayStart) }
+    }
+
+    private func showAdded(_ drink: AddedDrink) {
+        addedTask?.cancel()
+        withAnimation(.snappy) { added = drink }
+        addedTask = Task {
+            try? await Task.sleep(for: .seconds(4))
+            guard !Task.isCancelled else { return }
+            withAnimation(.snappy) { added = nil }
+        }
     }
 
     private func show(_ message: String) {

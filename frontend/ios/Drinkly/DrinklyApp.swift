@@ -15,8 +15,10 @@ struct DrinklyApp: App {
             ContentView()
                 .environmentObject(model)
         }
-        .onChange(of: scenePhase) { _, phase in
+        .onChange(of: scenePhase) { old, phase in
             if phase == .active { model.refresh() }
+            // Back from the background: Today counts its number up again
+            if old == .background && phase == .active { model.requestIntro() }
         }
     }
 }
