@@ -3,9 +3,14 @@ package at.drinkly.app.ui.screens
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.foundation.background
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -91,21 +96,49 @@ import at.drinkly.app.ui.components.pressable
 import at.drinkly.app.ui.theme.DrinklyColors
 import at.drinkly.app.ui.theme.accent
 import at.drinkly.app.ui.theme.water
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBottle: () -> Unit) {
+fun TodayScreen(
+    d: Dashboard,
+    onAdd: (Int) -> Unit,
+    onRefresh: () -> Unit,
+    onBottle: () -> Unit,
+    playIntro: Boolean = false,
+    onIntroPlayed: () -> Unit = {},
+) {
     var showAddSheet by rememberSaveable { mutableStateOf(false) }
 
     val accent by animateColorAsState(d.status.accent, label = "accent")
     val water by animateColorAsState(d.status.water, label = "water")
-    val fill by animateFloatAsState(d.progress, spring(stiffness = Spring.StiffnessVeryLow), label = "fill")
-    val shownMl by animateIntAsState(d.todayMl, label = "ml")
+    // Water follows new drinks slowly; Animatable so the intro can snap it to the current level first
+    val fill = remember { Animatable(d.progress) }
+    LaunchedEffect(d.progress) { fill.animateTo(d.progress, spring(stiffness = Spring.StiffnessVeryLow)) }
+    val progress by rememberUpdatedState(d.progress)
+    val animatedMl by animateIntAsState(d.todayMl, label = "ml")
+
+    // On opening the app the number counts up from 0 and the water rises with it
+    val intro = remember { Animatable(if (playIntro) 0f else 1f) }
+    val hasEntries by rememberUpdatedState(d.entries.isNotEmpty())
+    LaunchedEffect(playIntro) {
+        if (!playIntro) return@LaunchedEffect
+        intro.snapTo(0f)
+        // On a cold start, wait briefly for the first load so it doesn't count up to 0
+        withTimeoutOrNull(2000) { snapshotFlow { hasEntries }.first { it } }
+        fill.snapTo(progress)
+        intro.animateTo(1f, tween(durationMillis = 900, easing = FastOutSlowInEasing))
+        onIntroPlayed()
+    }
+    // Start from 0 in the very frame the intro is requested (the reset in the effect only lands a frame later)
+    val introFactor = if (playIntro && intro.value == 1f) 0f else intro.value
+    val shownMl = (animatedMl * introFactor).roundToInt()
 
     Box(Modifier.fillMaxSize()) {
         HydrationScene(
-            fill = fill,
+            fill = fill.value * introFactor,
             water = water,
             modifier = Modifier.fillMaxSize(),
         )

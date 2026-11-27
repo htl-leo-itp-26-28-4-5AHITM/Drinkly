@@ -55,6 +55,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import at.drinkly.app.data.liters
 import at.drinkly.app.ui.screens.ActivityScreen
@@ -82,6 +84,10 @@ fun DrinklyApp(vm: DrinklyViewModel) {
     var added by remember { mutableStateOf<AddedDrink?>(null) }
     var addedVisible by remember { mutableStateOf(false) }
 
+    // Every time the app comes to the foreground, Today plays its count-up once (not on tab switches)
+    var introPending by remember { mutableStateOf(true) }
+    LifecycleEventEffect(Lifecycle.Event.ON_START) { introPending = true }
+
     LaunchedEffect(vm) {
         vm.messages.collect { message ->
             snackbar.currentSnackbarData?.dismiss()
@@ -100,7 +106,14 @@ fun DrinklyApp(vm: DrinklyViewModel) {
     Box(Modifier.fillMaxSize().background(DrinklyColors.Sky)) {
         Crossfade(targetState = tab, label = "tab") { current ->
             when (current) {
-                Tab.TODAY -> TodayScreen(dashboard, onAdd = vm::addDrink, onRefresh = vm::refresh, onBottle = vm::toggleBottle)
+                Tab.TODAY -> TodayScreen(
+                    dashboard,
+                    onAdd = vm::addDrink,
+                    onRefresh = vm::refresh,
+                    onBottle = vm::toggleBottle,
+                    playIntro = introPending,
+                    onIntroPlayed = { introPending = false },
+                )
                 Tab.ACTIVITY -> ActivityScreen(dashboard, onDelete = vm::deleteDrink)
                 Tab.REMINDERS -> RemindersScreen(dashboard, onUpdate = vm::updateSettings, onTest = vm::sendTestReminder)
                 Tab.PROFILE -> ProfileScreen(
