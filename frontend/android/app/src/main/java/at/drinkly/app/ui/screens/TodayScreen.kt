@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -124,13 +123,17 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
             SyncButton(d, onRefresh)
         }
 
-        // Number and plus sit in the vertical middle of the whole screen
-        Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+        // Hero: the streak as a small eyebrow above today's amount, a bit above the middle
+        Column(
+            Modifier.align(BiasAlignment(horizontalBias = 0f, verticalBias = -0.25f)),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            StreakLine(d.streak)
             Row(
                 Modifier.semantics(mergeDescendants = true) {},
                 verticalAlignment = Alignment.Bottom,
             ) {
-                // Invisible twin of the unit on the left, so the number itself is centred above the plus
+                // Invisible twin of the unit on the left, so the digits themselves are centred
                 Text("L", Modifier.alignByBaseline().alpha(0f).clearAndSetSemantics {}, fontSize = 40.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.width(6.dp))
                 Text(
@@ -146,28 +149,25 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
                 Text("L", Modifier.alignByBaseline(), fontSize = 40.sp, fontWeight = FontWeight.SemiBold, color = accent)
             }
             // The status card is hidden for now; bring it back with StatusCard(d.message, d.streak)
-
-            val source = remember { MutableInteractionSource() }
-            Button(
-                onClick = { showAddSheet = true },
-                interactionSource = source,
-                modifier = Modifier
-                    // pull it up into the empty space below the digits (the font's descent)
-                    .offset(y = (-16).dp)
-                    .pressScale(source)
-                    .size(64.dp)
-                    .shadow(12.dp, CircleShape, ambientColor = DrinklyColors.Navy, spotColor = DrinklyColors.Navy.copy(alpha = 0.35f)),
-                shape = CircleShape,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = DrinklyColors.Blue),
-                contentPadding = PaddingValues(0.dp),
-            ) {
-                Icon(Icons.Rounded.Add, contentDescription = "Add a drink", modifier = Modifier.size(32.dp))
-            }
         }
 
-        // The streak sits in the upper third
-        Box(Modifier.align(BiasAlignment(horizontalBias = 0f, verticalBias = -0.6f))) {
-            BigStreak(d.streak)
+        // The main action, within thumb reach on the water above the bottom bar
+        val source = remember { MutableInteractionSource() }
+        Button(
+            onClick = { showAddSheet = true },
+            interactionSource = source,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+                .padding(bottom = 92.dp + 32.dp)
+                .pressScale(source)
+                .size(72.dp)
+                .shadow(16.dp, CircleShape, ambientColor = DrinklyColors.Navy, spotColor = DrinklyColors.Navy.copy(alpha = 0.35f)),
+            shape = CircleShape,
+            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = DrinklyColors.Blue),
+            contentPadding = PaddingValues(0.dp),
+        ) {
+            Icon(Icons.Rounded.Add, contentDescription = "Add a drink", modifier = Modifier.size(36.dp))
         }
     }
 
@@ -217,18 +217,28 @@ private fun StatusCard(message: HydrationMessage, streak: Int) {
     }
 }
 
-/** The streak in large type, straight on the water. */
+/** The streak as a small line above the number: a warm flame while it runs, grey at zero. */
 @Composable
-private fun BigStreak(streak: Int) {
-    val color = if (streak > 0) DrinklyColors.Navy else DrinklyColors.Navy.copy(alpha = 0.4f)
+private fun StreakLine(streak: Int) {
+    val active = streak > 0
     Row(
         Modifier.clearAndSetSemantics { contentDescription = "$streak-day streak" },
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.Rounded.LocalFireDepartment, contentDescription = null, tint = color, modifier = Modifier.size(48.dp))
-        Text("$streak", fontSize = 72.sp, lineHeight = 72.sp, fontWeight = FontWeight.Bold, color = color)
+        Icon(
+            Icons.Rounded.LocalFireDepartment, contentDescription = null,
+            tint = if (active) Flame else DrinklyColors.NoData,
+            modifier = Modifier.size(26.dp),
+        )
+        Spacer(Modifier.width(2.dp))
+        Text(
+            "$streak", fontSize = 24.sp, fontWeight = FontWeight.Bold,
+            color = if (active) DrinklyColors.Navy else DrinklyColors.Muted,
+        )
     }
 }
+
+private val Flame = Color(0xFFFF8A3D)
 
 @Composable
 private fun StreakChip(streak: Int) {
