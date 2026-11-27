@@ -91,8 +91,9 @@ fun ActivityScreen(d: Dashboard, onDelete: (DrinkEntry) -> Unit) {
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         if (range == ActivityRange.CALENDAR) {
-            CalendarCard(d, month, onMonth = { month = it })
-            RangePicker(range, onChange = { range = it })
+            CalendarCard(d, month, onMonth = { month = it }) {
+                RangePicker(range, onChange = { range = it })
+            }
         } else {
             val days = (range.days - 1 downTo 0).map { d.today.minusDays(it.toLong()) }
             val values = days.map { d.totals[it] ?: 0 }
@@ -103,10 +104,9 @@ fun ActivityScreen(d: Dashboard, onDelete: (DrinkEntry) -> Unit) {
                 Text(periodTitle(days.first(), days.last()), fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
                 Spacer(Modifier.height(10.dp))
                 BarChart(days, values, goals, Modifier.fillMaxWidth().height(220.dp))
-                Spacer(Modifier.height(8.dp))
-                Text("Dashed line: your goal at the time · gray: no drinks logged", fontSize = 12.sp, color = DrinklyColors.Muted)
+                Spacer(Modifier.height(16.dp))
+                RangePicker(range, onChange = { range = it })
             }
-            RangePicker(range, onChange = { range = it })
 
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 StatTile("Daily average", if (activeDays.isEmpty()) "–" else "${activeDays.average().roundToInt()} ml", Modifier.weight(1f))
@@ -143,7 +143,7 @@ private fun RangePicker(range: ActivityRange, onChange: (ActivityRange) -> Unit)
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(50))
-            .background(Color.White)
+            .background(DrinklyColors.Sky)
             .padding(4.dp)
             .selectableGroup(),
     ) {
@@ -167,7 +167,7 @@ private fun RangePicker(range: ActivityRange, onChange: (ActivityRange) -> Unit)
 
 /** A month at a glance: the stronger the blue, the closer you got to your goal that day. */
 @Composable
-private fun CalendarCard(d: Dashboard, month: YearMonth, onMonth: (YearMonth) -> Unit) {
+private fun CalendarCard(d: Dashboard, month: YearMonth, onMonth: (YearMonth) -> Unit, footer: @Composable () -> Unit) {
     val locale = Locale.getDefault()
     val firstDay = WeekFields.of(locale).firstDayOfWeek
     val first = month.atDay(1)
@@ -218,6 +218,8 @@ private fun CalendarCard(d: Dashboard, month: YearMonth, onMonth: (YearMonth) ->
         Spacer(Modifier.height(10.dp))
         Text("Goal reached on $reached of ${past.size} days", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
         Text("Stronger blue = closer to your goal · gray: no drinks logged", fontSize = 12.sp, color = DrinklyColors.Muted)
+        Spacer(Modifier.height(16.dp))
+        footer()
     }
 }
 
@@ -267,6 +269,7 @@ private fun StatTile(label: String, value: String, modifier: Modifier = Modifier
 private fun BarChart(days: List<LocalDate>, values: List<Int>, goals: List<Int>, modifier: Modifier = Modifier) {
     val measurer = rememberTextMeasurer()
     val labelStyle = TextStyle(fontSize = 11.sp, color = DrinklyColors.Ink)
+    val goalStyle = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
     val weekdayFormat = DateTimeFormatter.ofPattern("EEE")
     val dayMonthFormat = DateTimeFormatter.ofPattern("d MMM")
 
@@ -281,11 +284,20 @@ private fun BarChart(days: List<LocalDate>, values: List<Int>, goals: List<Int>,
         val radius = CornerRadius(minOf(barWidth / 2, 6.dp.toPx()))
         fun y(ml: Int) = chartHeight - chartHeight * ml / yMax
 
+        // "Goal" tag on the y-axis where the goal line starts; axis labels it would cover are left out
+        val goalLabel = measurer.measure("Goal", goalStyle)
+        val pillHeight = goalLabel.size.height + 4.dp.toPx()
+        val pillWidth = goalLabel.size.width + 10.dp.toPx()
+        val pillTop = (y(goals.first()) - pillHeight / 2).coerceIn(0f, chartHeight - pillHeight)
+
         // y-axis with grid lines in litres
         for (ml in 0..yMax.toInt() step yStep) {
             drawLine(DrinklyColors.Line, Offset(axisWidth, y(ml)), Offset(size.width, y(ml)), strokeWidth = 1.dp.toPx())
             val layout = measurer.measure(liters(ml), labelStyle.copy(color = DrinklyColors.Muted))
-            drawText(layout, topLeft = Offset(axisWidth - 6.dp.toPx() - layout.size.width, y(ml) - layout.size.height / 2f))
+            val top = y(ml) - layout.size.height / 2f
+            if (top + layout.size.height < pillTop || top > pillTop + pillHeight) {
+                drawText(layout, topLeft = Offset(axisWidth - 6.dp.toPx() - layout.size.width, top))
+            }
         }
 
         days.forEachIndexed { i, day ->
@@ -326,9 +338,12 @@ private fun BarChart(days: List<LocalDate>, values: List<Int>, goals: List<Int>,
         }
         drawPath(
             goalPath,
-            color = DrinklyColors.Navy.copy(alpha = 0.6f),
+            color = DrinklyColors.Navy.copy(alpha = 0.7f),
             style = Stroke(width = 1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f))),
         )
+        val pillLeft = axisWidth - 2.dp.toPx() - pillWidth
+        drawRoundRect(DrinklyColors.Navy, Offset(pillLeft, pillTop), Size(pillWidth, pillHeight), CornerRadius(pillHeight / 2))
+        drawText(goalLabel, topLeft = Offset(pillLeft + 5.dp.toPx(), pillTop + 2.dp.toPx()))
     }
 }
 
