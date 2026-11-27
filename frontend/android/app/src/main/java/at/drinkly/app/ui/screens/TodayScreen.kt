@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -146,12 +147,13 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
             }
             // The status card is hidden for now; bring it back with StatusCard(d.message, d.streak)
 
-            Spacer(Modifier.height(24.dp))
             val source = remember { MutableInteractionSource() }
             Button(
                 onClick = { showAddSheet = true },
                 interactionSource = source,
                 modifier = Modifier
+                    // pull it up into the empty space below the digits (the font's descent)
+                    .offset(y = (-16).dp)
                     .pressScale(source)
                     .size(64.dp)
                     .shadow(12.dp, CircleShape, ambientColor = DrinklyColors.Navy, spotColor = DrinklyColors.Navy.copy(alpha = 0.35f)),
@@ -219,15 +221,12 @@ private fun StatusCard(message: HydrationMessage, streak: Int) {
 @Composable
 private fun BigStreak(streak: Int) {
     val color = if (streak > 0) DrinklyColors.Navy else DrinklyColors.Navy.copy(alpha = 0.4f)
-    Column(
+    Row(
         Modifier.clearAndSetSemantics { contentDescription = "$streak-day streak" },
-        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Rounded.LocalFireDepartment, contentDescription = null, tint = color, modifier = Modifier.size(48.dp))
-            Text("$streak", fontSize = 72.sp, lineHeight = 72.sp, fontWeight = FontWeight.Bold, color = color)
-        }
-        Text("day streak", fontSize = 17.sp, fontWeight = FontWeight.Medium, color = color)
+        Icon(Icons.Rounded.LocalFireDepartment, contentDescription = null, tint = color, modifier = Modifier.size(48.dp))
+        Text("$streak", fontSize = 72.sp, lineHeight = 72.sp, fontWeight = FontWeight.Bold, color = color)
     }
 }
 
