@@ -256,7 +256,7 @@ private fun ConnectionPill(d: Dashboard, onClick: () -> Unit) {
     val shape = RoundedCornerShape(50)
     Row(
         Modifier
-            .shadow(16.dp, shape, ambientColor = DrinklyColors.Navy.copy(alpha = 0.4f), spotColor = DrinklyColors.Navy.copy(alpha = 0.4f))
+            .shadow(18.dp, shape, ambientColor = DrinklyColors.Navy.copy(alpha = 0.6f), spotColor = DrinklyColors.Navy.copy(alpha = 0.6f))
             .pressable(shape, onClick = onClick)
             .background(Color.White)
             .padding(horizontal = 12.dp, vertical = 9.dp)
