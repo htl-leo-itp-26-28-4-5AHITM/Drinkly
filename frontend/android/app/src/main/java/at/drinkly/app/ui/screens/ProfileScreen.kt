@@ -62,7 +62,6 @@ import at.drinkly.app.data.AppSettings
 import at.drinkly.app.data.Hydration
 import at.drinkly.app.ui.Dashboard
 import at.drinkly.app.ui.components.BottleIllustration
-import at.drinkly.app.ui.components.ScreenTitle
 import at.drinkly.app.ui.components.SectionCard
 import at.drinkly.app.ui.components.liters
 import at.drinkly.app.ui.theme.DrinklyColors
@@ -87,11 +86,9 @@ fun ProfileScreen(
             .statusBarsPadding()
             .navigationBarsPadding()
             .padding(horizontal = 20.dp)
-            .padding(bottom = 110.dp),
+            .padding(top = 16.dp, bottom = 110.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        ScreenTitle("Profile")
-
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 Modifier.size(64.dp).clip(CircleShape).background(DrinklyColors.Blue),

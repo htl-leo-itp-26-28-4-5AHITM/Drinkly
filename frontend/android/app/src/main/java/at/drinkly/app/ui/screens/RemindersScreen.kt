@@ -57,7 +57,6 @@ import androidx.core.content.ContextCompat
 import at.drinkly.app.data.AppSettings
 import at.drinkly.app.data.ReminderPlan
 import at.drinkly.app.ui.Dashboard
-import at.drinkly.app.ui.components.ScreenTitle
 import at.drinkly.app.ui.components.SectionCard
 import at.drinkly.app.ui.components.pressScale
 import java.time.format.DateTimeFormatter
@@ -85,11 +84,9 @@ fun RemindersScreen(d: Dashboard, onUpdate: ((AppSettings) -> AppSettings) -> Un
             .statusBarsPadding()
             .navigationBarsPadding()
             .padding(horizontal = 20.dp)
-            .padding(bottom = 110.dp),
+            .padding(top = 16.dp, bottom = 110.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        ScreenTitle("Reminders", "Pick a plan for your drink reminders")
-
         Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             ReminderPlan.entries.forEach { plan ->
                 PlanCard(plan, selected = plan == s.reminderPlan) {

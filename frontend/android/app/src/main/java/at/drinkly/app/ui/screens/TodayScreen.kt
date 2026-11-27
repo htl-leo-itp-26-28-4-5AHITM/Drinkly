@@ -66,7 +66,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -89,10 +88,7 @@ import at.drinkly.app.ui.theme.accent
 import at.drinkly.app.ui.theme.water
 import java.time.Duration
 import java.time.Instant
-import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
-
-private val dateFormat = DateTimeFormatter.ofPattern("EEEE, d MMMM")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -126,10 +122,7 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Row(Modifier.padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f).semantics(mergeDescendants = true) { heading() }) {
-                    Text("Today", fontSize = 30.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Blue)
-                    Text(d.now.format(dateFormat), fontSize = 15.sp, color = DrinklyColors.Muted)
-                }
+                Spacer(Modifier.weight(1f))
                 ConnectionPill(d) { showConnections = true }
             }
 
