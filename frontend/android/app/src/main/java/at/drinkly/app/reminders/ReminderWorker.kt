@@ -10,6 +10,8 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import at.drinkly.app.data.liters
+import at.drinkly.app.data.litersValue
 import at.drinkly.app.MainActivity
 import at.drinkly.app.R
 import at.drinkly.app.data.DrinklyApi
@@ -39,7 +41,7 @@ class ReminderWorker(context: Context, params: WorkerParameters) : CoroutineWork
             if (status != HydrationStatus.BEHIND && status != HydrationStatus.SLIGHTLY_BEHIND) return Result.success()
         }
 
-        val text = if (todayMl != null) "You're at $todayMl of ${settings.goalMl} ml today." else "Remember to drink some water."
+        val text = if (todayMl != null) "You're at ${litersValue(todayMl)} of ${liters(settings.goalMl)} today." else "Remember to drink some water."
         notify(applicationContext, "Time for a sip", text)
         return Result.success()
     }

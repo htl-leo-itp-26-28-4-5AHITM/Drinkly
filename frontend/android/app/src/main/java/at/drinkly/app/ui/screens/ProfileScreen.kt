@@ -57,13 +57,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import at.drinkly.app.data.liters
 import at.drinkly.app.bottle.BottleLink
 import at.drinkly.app.data.AppSettings
 import at.drinkly.app.data.Hydration
 import at.drinkly.app.ui.Dashboard
 import at.drinkly.app.ui.components.BottleIllustration
 import at.drinkly.app.ui.components.SectionCard
-import at.drinkly.app.ui.components.liters
 import at.drinkly.app.ui.theme.DrinklyColors
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -99,7 +99,7 @@ fun ProfileScreen(
             Spacer(Modifier.width(16.dp))
             Column {
                 Text(s.username, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
-                Text("${d.streak}-day streak · ${s.goalMl} ml goal", color = DrinklyColors.Muted)
+                Text("${d.streak}-day streak · ${liters(s.goalMl)} goal", color = DrinklyColors.Muted)
             }
         }
 
@@ -110,7 +110,7 @@ fun ProfileScreen(
         }
 
         SectionCard("Daily goal") {
-            Text("${s.goalMl} ml", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Blue)
+            Text(liters(s.goalMl), fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Blue)
             Slider(
                 value = s.goalMl.toFloat(),
                 onValueChange = { v -> onUpdate { it.copy(goalMl = (v / 50).roundToInt() * 50) } },
@@ -131,7 +131,7 @@ fun ProfileScreen(
             }
             val suggested = Hydration.suggestedGoal(s.weightKg)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Suggested: $suggested ml", Modifier.weight(1f), fontSize = 13.sp, color = DrinklyColors.Muted)
+                Text("Suggested: ${liters(suggested)}", Modifier.weight(1f), fontSize = 13.sp, color = DrinklyColors.Muted)
                 TextButton(
                     onClick = { onUpdate { it.copy(goalMl = suggested.coerceIn(1000, 4000)) } },
                     enabled = suggested != s.goalMl,
@@ -145,7 +145,7 @@ fun ProfileScreen(
             val history = d.goalHistory
             Text(
                 if (history.size > 1) {
-                    "Changed from ${history[history.size - 2].goalMl} to ${history.last().goalMl} ml on " +
+                    "Changed from ${liters(history[history.size - 2].goalMl)} to ${liters(history.last().goalMl)} on " +
                         history.last().day.format(DateTimeFormatter.ofPattern("d MMMM")) + "."
                 } else {
                     "Your goal hasn't changed yet. When you change it, this line shows what it was before."
@@ -176,7 +176,7 @@ fun ProfileScreen(
             if (d.bottle.link == BottleLink.CONNECTED) {
                 Spacer(Modifier.height(10.dp))
                 OutlinedButton(onClick = { onSimulateSip(250) }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Simulate a 250 ml sip")
+                    Text("Simulate a ${liters(250)} sip")
                 }
             }
             Spacer(Modifier.height(6.dp))
@@ -217,7 +217,7 @@ private fun GoalHistoryChart(d: Dashboard, modifier: Modifier = Modifier) {
     val top = (points.maxOf { it.second } * 1.25f)
     val dateFormat = DateTimeFormatter.ofPattern("d MMM")
 
-    Canvas(modifier.semantics { contentDescription = "Daily goal over time, currently ${d.settings.goalMl} ml" }) {
+    Canvas(modifier.semantics { contentDescription = "Daily goal over time, currently ${liters(d.settings.goalMl)}" }) {
         val axisWidth = 34.dp.toPx()
         val labelHeight = 18.dp.toPx()
         val h = size.height - labelHeight

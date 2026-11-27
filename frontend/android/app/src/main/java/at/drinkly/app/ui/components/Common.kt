@@ -27,7 +27,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import at.drinkly.app.ui.theme.DrinklyColors
-import java.text.DecimalFormat
 
 @Composable
 fun SectionCard(title: String? = null, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
@@ -65,8 +64,3 @@ fun Modifier.pressable(shape: Shape, role: Role = Role.Button, onClick: () -> Un
         .clip(shape)
         .clickable(interactionSource = source, indication = ripple(), role = role, onClick = onClick)
 }
-
-private val litersFormat = DecimalFormat("0.##")
-
-/** 1500 -> "1.5 l" */
-fun liters(ml: Int): String = litersFormat.format(ml / 1000.0) + " l"

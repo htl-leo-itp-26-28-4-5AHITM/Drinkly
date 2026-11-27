@@ -56,6 +56,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import at.drinkly.app.data.liters
 import at.drinkly.app.ui.screens.ActivityScreen
 import at.drinkly.app.ui.screens.ProfileScreen
 import at.drinkly.app.ui.screens.RemindersScreen
@@ -137,7 +138,7 @@ fun DrinklyApp(vm: DrinklyViewModel) {
     }
 }
 
-/** Short confirmation like "Added 250 ml". */
+/** Short confirmation like "Removed 0.25 L". */
 @Composable
 private fun Toast(message: String) {
     val shape = RoundedCornerShape(50)
@@ -160,7 +161,7 @@ private fun Toast(message: String) {
 @Composable
 private fun AddedNotice(drink: AddedDrink, onUndo: () -> Unit) {
     val shape = RoundedCornerShape(50)
-    val ml = drink.entry.milliliters
+    val amount = liters(drink.entry.milliliters)
     Row(
         Modifier
             .shadow(8.dp, shape, ambientColor = DrinklyColors.Navy.copy(alpha = 0.15f), spotColor = DrinklyColors.Navy.copy(alpha = 0.15f))
@@ -173,7 +174,7 @@ private fun AddedNotice(drink: AddedDrink, onUndo: () -> Unit) {
         Icon(Icons.Rounded.WaterDrop, contentDescription = null, tint = DrinklyColors.Blue, modifier = Modifier.size(15.dp))
         Spacer(Modifier.width(6.dp))
         Text(
-            if (drink.fromBottle) "Synced $ml ml" else "Added $ml ml",
+            if (drink.fromBottle) "Synced $amount" else "Added $amount",
             fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DrinklyColors.Ink,
         )
         val source = remember { MutableInteractionSource() }
