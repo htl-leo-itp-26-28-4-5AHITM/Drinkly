@@ -143,17 +143,11 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
                 Spacer(Modifier.width(6.dp))
                 Text("L", Modifier.alignByBaseline(), fontSize = 32.sp, fontWeight = FontWeight.SemiBold, color = accent)
             }
-            Text(
-                "of ${liters(d.settings.goalMl)} daily goal",
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Medium,
-                color = DrinklyColors.Muted,
-            )
+            Spacer(Modifier.height(8.dp))
+            StreakChip(d.streak)
+            // The status card is hidden for now; bring it back with StatusCard(d.message, d.streak)
 
-            Spacer(Modifier.height(20.dp))
-            StatusCard(d.message, d.streak)
-
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(32.dp))
             val source = remember { MutableInteractionSource() }
             Button(
                 onClick = { showAddSheet = true },
@@ -195,7 +189,7 @@ private val HydrationStatus.icon: ImageVector
         HydrationStatus.TOO_MUCH -> Icons.Rounded.PanTool
     }
 
-/** What's going on right now plus the streak, as one pill: status on the left, streak chip on the right. */
+/** What's going on right now plus the streak, as one pill (currently not shown on Today): status on the left, streak chip on the right. */
 @Composable
 private fun StatusCard(message: HydrationMessage, streak: Int) {
     val shape = RoundedCornerShape(50)
