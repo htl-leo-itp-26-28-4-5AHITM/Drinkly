@@ -1,9 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Drinkly signet, paths taken unchanged from the Corporate Design Manual (documents/, page 14:
+     "Profilbild · Signet weiß auf Aqua") and only scaled. Notification silhouette, drop height 20 dp. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M12,2.5C12,2.5 5,10.2 5,15a7,7 0,0 0,14 0C19,10.2 12,2.5 12,2.5z" />
+    <group android:scaleX="0.467879" android:scaleY="0.467879" android:translateX="-321.3318" android:translateY="-138.0037">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M 712.433594 299.230469 C 706.433594 307.480469 697.433594 317.226562 697.433594 326.976562 C 697.433594 328.964844 697.8125 330.878906 698.574219 332.71875 C 699.335938 334.554688 700.421875 336.175781 701.828125 337.582031 C 703.234375 338.988281 704.855469 340.074219 706.691406 340.835938 C 708.53125 341.59375 710.441406 341.976562 712.433594 341.976562 C 714.421875 341.976562 716.335938 341.59375 718.171875 340.835938 C 720.007812 340.074219 721.632812 338.988281 723.039062 337.582031 C 724.445312 336.175781 725.527344 334.554688 726.289062 332.71875 C 727.050781 330.878906 727.429688 328.964844 727.429688 326.976562 C 727.429688 317.226562 718.433594 307.480469 712.433594 299.230469 Z M 712.433594 299.230469" />
+    </group>
 </vector>
