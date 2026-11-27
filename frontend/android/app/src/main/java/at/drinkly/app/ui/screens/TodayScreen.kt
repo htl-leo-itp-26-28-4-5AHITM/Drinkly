@@ -1,6 +1,5 @@
 package at.drinkly.app.ui.screens
 
-import android.text.format.DateUtils
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
@@ -92,8 +91,6 @@ import at.drinkly.app.ui.components.pressable
 import at.drinkly.app.ui.theme.DrinklyColors
 import at.drinkly.app.ui.theme.accent
 import at.drinkly.app.ui.theme.water
-import java.time.Duration
-import java.time.Instant
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -136,12 +133,11 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
             )
         }
 
-        // Hero: streak, today's amount and the last drink, together in the vertical middle of the screen
+        // Hero: today's amount with the streak under it, together in the vertical middle of the screen
         Column(
             Modifier.align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            StreakLine(d.streak)
             Row(
                 Modifier.semantics(mergeDescendants = true) {},
                 verticalAlignment = Alignment.Bottom,
@@ -161,9 +157,7 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
                 Spacer(Modifier.width(6.dp))
                 Text("L", Modifier.alignByBaseline(), fontSize = 40.sp, fontWeight = FontWeight.SemiBold, color = accent)
             }
-            d.entries.firstOrNull()?.let { last ->
-                Text(lastDrinkText(last.timestamp), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = DrinklyColors.Navy.copy(alpha = 0.75f))
-            }
+            StreakLine(d.streak)
             // The status card is hidden for now; bring it back with StatusCard(d.message, d.streak)
         }
 
@@ -239,13 +233,7 @@ private fun greeting(hour: Int) = when (hour) {
     else -> "Good evening"
 }
 
-private fun lastDrinkText(at: Instant): String {
-    if (Duration.between(at, Instant.now()).seconds < 60) return "Last drink just now"
-    val relative = DateUtils.getRelativeTimeSpanString(at.toEpochMilli(), System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS)
-    return "Last drink ${relative.toString().replaceFirstChar { it.lowercase() }}"
-}
-
-/** The streak as a small line above the number: a warm flame while it runs, grey at zero. */
+/** The streak as a small line under the number: a warm flame while it runs, grey at zero. */
 @Composable
 private fun StreakLine(streak: Int) {
     val active = streak > 0
