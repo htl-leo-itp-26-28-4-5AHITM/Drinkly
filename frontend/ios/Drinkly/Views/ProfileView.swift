@@ -9,8 +9,6 @@ struct ProfileView: View {
 
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                ScreenTitle("Profile")
-
                 HStack(spacing: 16) {
                     Text(settings.username.prefix(2).uppercased())
                         .font(.title2.weight(.semibold))
@@ -19,7 +17,7 @@ struct ProfileView: View {
                         .background(Theme.blue, in: Circle())
                     VStack(alignment: .leading, spacing: 2) {
                         Text(settings.username).font(.title2.weight(.semibold)).foregroundStyle(Theme.ink)
-                        Text("\(model.streak)-day streak · \(settings.goalMl) ml goal").foregroundStyle(Theme.muted)
+                        Text("\(model.streak)-day streak · \(Liters.text(settings.goalMl)) goal").foregroundStyle(Theme.muted)
                     }
                 }
 
@@ -31,8 +29,9 @@ struct ProfileView: View {
                 }
 
                 Card(title: "Daily goal") {
-                    Text("\(settings.goalMl) ml")
+                    Text(Liters.text(settings.goalMl))
                         .font(.title2.weight(.semibold))
+                        .monospacedDigit()
                         .foregroundStyle(Theme.blue)
                     Slider(
                         value: Binding(
@@ -52,7 +51,7 @@ struct ProfileView: View {
                     }
                     let suggested = Hydration.suggestedGoal(weightKg: settings.weightKg)
                     HStack {
-                        Text("Suggested: \(suggested) ml").font(.footnote).foregroundStyle(Theme.muted)
+                        Text("Suggested: \(Liters.text(suggested))").font(.footnote).foregroundStyle(Theme.muted)
                         Spacer()
                         Button("Use as goal") {
                             model.settings.goalMl = min(max(suggested, 1000), 4000)
@@ -79,19 +78,15 @@ struct ProfileView: View {
                         }
                         Spacer()
                         Button(model.bottle.link == .disconnected ? "Connect" : "Disconnect") { model.toggleBottle() }
-                            .buttonStyle(.borderedProminent)
-                            .buttonBorderShape(.capsule)
-                            .tint(Theme.blue)
+                            .prominentCapsuleButton(size: .regular)
                     }
                     if model.bottle.link == .connected {
                         Button {
                             model.simulateSip(milliliters: 250)
                         } label: {
-                            Text("Simulate a 250 ml sip").frame(maxWidth: .infinity)
+                            Text("Simulate a \(Liters.text(250)) sip").frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(.bordered)
-                        .buttonBorderShape(.capsule)
-                        .tint(Theme.blue)
+                        .secondaryCapsuleButton()
                     }
                     Text("Demo mode: the bottle is simulated until its Bluetooth profile is available.")
                         .font(.caption)
@@ -107,6 +102,7 @@ struct ProfileView: View {
                 }
             }
             .padding(.horizontal, 20)
+            .padding(.top, 16)
             .padding(.bottom, 16)
         }
         .scrollDismissesKeyboard(.interactively)
@@ -118,7 +114,7 @@ struct ProfileView: View {
             return "Your goal hasn't changed yet. When you change it, this line shows what it was before."
         }
         let previous = history[history.count - 2].goalMl
-        return "Changed from \(previous) to \(last.goalMl) ml on \(last.day.formatted(.dateTime.day().month(.wide)))."
+        return "Changed from \(Liters.text(previous)) to \(Liters.text(last.goalMl)) on \(last.day.formatted(.dateTime.day().month(.wide)))."
     }
 
     private var bottleStatus: String {
@@ -176,7 +172,7 @@ private struct GoalHistoryChart: View {
             AxisMarks(position: .leading, values: .stride(by: 1000)) { value in
                 AxisGridLine().foregroundStyle(Theme.line)
                 AxisValueLabel {
-                    Text(HydrationScene.liters(Int(value.as(Double.self) ?? 0))).foregroundStyle(Theme.muted)
+                    Text(Liters.text(Int(value.as(Double.self) ?? 0))).foregroundStyle(Theme.muted)
                 }
             }
         }
@@ -186,7 +182,7 @@ private struct GoalHistoryChart: View {
             }
         }
         .frame(height: 130)
-        .accessibilityLabel("Daily goal over time, currently \(current) ml")
+        .accessibilityLabel("Daily goal over time, currently \(Liters.text(current))")
     }
 }
 

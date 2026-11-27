@@ -6,8 +6,6 @@ struct RemindersView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
-                ScreenTitle("Reminders", subtitle: "Pick a plan for your drink reminders")
-
                 ForEach(ReminderPlan.allCases) { plan in
                     PlanCard(plan: plan, selected: plan == model.settings.reminderPlan) {
                         model.settings.reminderPlan = plan
@@ -17,35 +15,18 @@ struct RemindersView: View {
                 Card(title: "Active hours") {
                     HourStepper(label: "From", hour: $model.settings.wakeHour, range: 4...(model.settings.sleepHour - 1))
                     HourStepper(label: "Until", hour: $model.settings.sleepHour, range: (model.settings.wakeHour + 1)...24)
-                    Text("Reminders only arrive in this window, and your daily goal is spread across it.")
-                        .font(.footnote)
-                        .foregroundStyle(Theme.muted)
                 }
 
                 Card {
                     Toggle(isOn: $model.settings.startOnWakeUp) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Start when I get up").fontWeight(.semibold).foregroundStyle(Theme.ink)
-                            Text("Your day begins the first time you use Drinkly or your bottle in the morning, so the pace fits your real day.")
-                                .font(.footnote)
-                                .foregroundStyle(Theme.muted)
-                        }
+                        Text("Start when I get up").fontWeight(.semibold).foregroundStyle(Theme.ink)
                     }
                     .tint(Theme.blue)
-                    if model.settings.startOnWakeUp {
-                        Label("Today started at \(model.dayStart.formatted(date: .omitted, time: .shortened))",
-                              systemImage: "sunrise.fill")
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(Theme.blue)
-                    }
                 }
 
                 Card {
                     Toggle(isOn: $model.settings.onlyWhenBehind) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Only when I'm behind").fontWeight(.semibold).foregroundStyle(Theme.ink)
-                            Text("Skip reminders while you're on track").font(.footnote).foregroundStyle(Theme.muted)
-                        }
+                        Text("Only when I'm behind").fontWeight(.semibold).foregroundStyle(Theme.ink)
                     }
                     .tint(Theme.blue)
                 }
@@ -57,11 +38,10 @@ struct RemindersView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 6)
                 }
-                .buttonStyle(.bordered)
-                .buttonBorderShape(.capsule)
-                .tint(Theme.blue)
+                .secondaryCapsuleButton()
             }
             .padding(.horizontal, 20)
+            .padding(.top, 16)
             .padding(.bottom, 16)
         }
     }
@@ -90,7 +70,7 @@ private struct PlanCard: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .background(.white, in: RoundedRectangle(cornerRadius: 22))
+            .background(Theme.card, in: RoundedRectangle(cornerRadius: 22))
             .overlay {
                 RoundedRectangle(cornerRadius: 22).stroke(selected ? Theme.blue : .clear, lineWidth: 2)
             }

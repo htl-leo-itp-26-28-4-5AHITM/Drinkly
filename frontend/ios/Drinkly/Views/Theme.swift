@@ -1,18 +1,27 @@
 import SwiftUI
+import UIKit
 
+/// The app's colors, each with a light and a dark variant that follow the system appearance.
+/// Values match the Android app.
 enum Theme {
-    static let blue = Color(hex: 0x1F7AC6)
-    static let deepBlue = Color(hex: 0x135A9C)
-    static let sky = Color(hex: 0xEFF6FC)
-    static let water = Color(hex: 0xD3E6F5)
-    static let navy = Color(hex: 0x2B4775)
-    static let ink = Color(hex: 0x1B2B3F)
-    // Dark enough for small text on white (contrast about 5:1)
-    static let muted = Color(hex: 0x627387)
-    static let line = Color(hex: 0xE2EAF2)
-    static let noData = Color(hex: 0xC9D2DC)
-    static let sand = Color(hex: 0xEFE2C4)
-    static let sandShade = Color(hex: 0xE3D1A8)
+    static let blue = Color(light: 0x1F7AC6, dark: 0x3D91DA)
+    static let deepBlue = Color(light: 0x135A9C, dark: 0x8CC4F0)
+    /// Page background.
+    static let sky = Color(light: 0xEFF6FC, dark: 0x0E1621)
+    static let water = Color(light: 0xD3E6F5, dark: 0x1F3651)
+    /// Strong blue for headings and marks; in dark mode a light blue so it stands out.
+    static let navy = Color(light: 0x2B4775, dark: 0xB4CCEB)
+    static let ink = Color(light: 0x1B2B3F, dark: 0xE6EDF5)
+    /// Slightly blue grey, dark enough for small text on white (contrast about 5:1).
+    static let muted = Color(light: 0x5D6F86, dark: 0x97A6B8)
+    static let line = Color(light: 0xE2EAF2, dark: 0x253241)
+    static let noData = Color(light: 0xC9D2DC, dark: 0x3A4654)
+    static let red = Color(light: 0xD64545, dark: 0xF07272)
+    /// Cards, sheets and pills on top of the page.
+    static let card = Color(light: 0xFFFFFF, dark: 0x18222E)
+    static let shadow = Color(light: 0x2B4775, dark: 0x000000)
+    /// The streak's flame, the one warm accent.
+    static let flame = Color(hex: 0xFF8A3D)
 }
 
 extension Color {
@@ -24,39 +33,45 @@ extension Color {
         )
     }
 
-    /// Mix of two hex colors, `t` = 0 gives `from`, 1 gives `to`.
-    init(mix from: UInt32, _ to: UInt32, _ t: Double) {
-        let t = min(max(t, 0), 1)
-        func channel(_ shift: UInt32) -> Double {
-            let a = Double((from >> shift) & 0xFF)
-            let b = Double((to >> shift) & 0xFF)
-            return (a + (b - a) * t) / 255
-        }
-        self.init(red: channel(16), green: channel(8), blue: channel(0))
+    /// A color that switches with the system appearance.
+    init(light: UInt32, dark: UInt32) {
+        self.init(uiColor: UIColor { traits in
+            UIColor(Color(hex: traits.userInterfaceStyle == .dark ? dark : light))
+        })
+    }
+
+    /// Mix of two colors, `t` = 0 gives `self`, 1 gives `other`.
+    func mixed(with other: Color, by t: Double, in environment: EnvironmentValues) -> Color {
+        let a = resolve(in: environment)
+        let b = other.resolve(in: environment)
+        let t = Float(min(max(t, 0), 1))
+        return Color(red: Double(a.red + (b.red - a.red) * t),
+                     green: Double(a.green + (b.green - a.green) * t),
+                     blue: Double(a.blue + (b.blue - a.blue) * t))
     }
 }
 
-/// Everything is blue: the less you drank, the paler it gets.
 extension HydrationStatus {
-    /// Main color for the status, used for the big number and the status icon.
+    /// Main color for the status, used for the big number. In light mode the less you drank, the paler;
+    /// on dark water it works the other way round: the more you drank, the brighter.
     var accent: Color {
         switch self {
-        case .behind: Color(hex: 0x5AB0E6)
-        case .slightlyBehind: Color(hex: 0x3796D6)
-        case .onTrack: Theme.blue
-        case .goalReached: Theme.deepBlue
-        case .tooMuch: Theme.navy
+        case .behind: Color(light: 0x4A9EDB, dark: 0x6E9FCB)
+        case .slightlyBehind: Color(light: 0x2F8AD0, dark: 0x7FB5E4)
+        case .onTrack: Color(light: 0x1F7AC6, dark: 0x94C8F2)
+        case .goalReached: Color(light: 0x135A9C, dark: 0xB8DCFA)
+        case .tooMuch: Color(light: 0x2B4775, dark: 0xD6EAFC)
         }
     }
 
-    /// Color of the water on the Today screen.
+    /// Color of the water surface on the Today screen; it gets deeper towards the bottom.
     var water: Color {
         switch self {
-        case .behind: Color(hex: 0xDDEFFA)
-        case .slightlyBehind: Color(hex: 0xCFE6F7)
-        case .onTrack: Color(hex: 0xBFDCF3)
-        case .goalReached: Color(hex: 0xA6CDEE)
-        case .tooMuch: Color(hex: 0x9CC2E6)
+        case .behind: Color(light: 0xD4ECFA, dark: 0x132C46)
+        case .slightlyBehind: Color(light: 0xC2E3F8, dark: 0x15324F)
+        case .onTrack: Color(light: 0xADD7F4, dark: 0x173959)
+        case .goalReached: Color(light: 0x9ACDF1, dark: 0x1A4064)
+        case .tooMuch: Color(light: 0x8DC1EA, dark: 0x1D4770)
         }
     }
 
@@ -68,5 +83,28 @@ extension HydrationStatus {
         case .goalReached: "checkmark.seal.fill"
         case .tooMuch: "hand.raised.fill"
         }
+    }
+}
+
+// MARK: Liquid Glass
+
+extension View {
+    /// Liquid Glass on iOS 26, before that a solid card with a soft shadow like on Android.
+    @ViewBuilder
+    func glassSurface<S: Shape>(in shape: S, interactive: Bool = false, shadowRadius: CGFloat = 12) -> some View {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            glassEffect(interactive ? Glass.regular.interactive() : Glass.regular, in: shape)
+        } else {
+            cardSurface(in: shape, shadowRadius: shadowRadius)
+        }
+        #else
+        cardSurface(in: shape, shadowRadius: shadowRadius)
+        #endif
+    }
+
+    private func cardSurface<S: Shape>(in shape: S, shadowRadius: CGFloat) -> some View {
+        background(Theme.card, in: shape)
+            .shadow(color: Theme.shadow.opacity(0.18), radius: shadowRadius, y: 4)
     }
 }

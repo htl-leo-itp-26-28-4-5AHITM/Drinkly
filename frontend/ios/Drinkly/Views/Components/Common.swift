@@ -1,31 +1,5 @@
 import SwiftUI
 
-struct ScreenTitle: View {
-    let title: String
-    var subtitle: String?
-
-    init(_ title: String, subtitle: String? = nil) {
-        self.title = title
-        self.subtitle = subtitle
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(title)
-                .font(.system(size: 30, weight: .semibold))
-                .foregroundStyle(Theme.blue)
-            if let subtitle {
-                Text(subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.muted)
-            }
-        }
-        .padding(.top, 12)
-        .padding(.bottom, 8)
-        .accessibilityAddTraits(.isHeader)
-    }
-}
-
 struct Card<Content: View>: View {
     var title: String?
     @ViewBuilder var content: Content
@@ -41,7 +15,7 @@ struct Card<Content: View>: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
-        .background(.white, in: RoundedRectangle(cornerRadius: 22))
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: 22))
     }
 }
 
@@ -57,4 +31,34 @@ struct PressableButtonStyle: ButtonStyle {
 
 extension ButtonStyle where Self == PressableButtonStyle {
     static var pressable: PressableButtonStyle { PressableButtonStyle() }
+}
+
+extension View {
+    /// The main button of a screen or sheet: Liquid Glass (prominent) on iOS 26, a filled capsule before.
+    @ViewBuilder
+    func prominentCapsuleButton(size: ControlSize = .large) -> some View {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            buttonStyle(.glassProminent).tint(Theme.blue).controlSize(size)
+        } else {
+            buttonStyle(.borderedProminent).buttonBorderShape(.capsule).tint(Theme.blue).controlSize(size)
+        }
+        #else
+        buttonStyle(.borderedProminent).buttonBorderShape(.capsule).tint(Theme.blue).controlSize(size)
+        #endif
+    }
+
+    /// A secondary button: Liquid Glass on iOS 26, a bordered capsule before.
+    @ViewBuilder
+    func secondaryCapsuleButton() -> some View {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            buttonStyle(.glass).tint(Theme.blue)
+        } else {
+            buttonStyle(.bordered).buttonBorderShape(.capsule).tint(Theme.blue)
+        }
+        #else
+        buttonStyle(.bordered).buttonBorderShape(.capsule).tint(Theme.blue)
+        #endif
+    }
 }

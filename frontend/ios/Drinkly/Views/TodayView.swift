@@ -3,248 +3,216 @@ import SwiftUI
 struct TodayView: View {
     @EnvironmentObject private var model: AppModel
     @State private var showAddSheet = false
-    @State private var showConnections = false
+    @State private var intro: Double = 1
+    @State private var introRunning = false
+
+    /// 0…1 while the number counts up after opening the app, 1 otherwise.
+    private var introFactor: Double {
+        if model.introPlayed == model.introRequest { return 1 }
+        // Requested but not started yet: show 0 rather than the old value for a frame
+        return introRunning ? intro : 0
+    }
 
     var body: some View {
-        let message = model.message
-        let status = message.status
+        let status = model.status
 
-        VStack(spacing: 0) {
-            HStack {
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("Today")
-                        .font(.system(size: 30, weight: .semibold))
-                        .foregroundStyle(Theme.blue)
-                    Text(model.now.formatted(.dateTime.weekday(.wide).day().month(.wide)))
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.muted)
+        GeometryReader { geo in
+            ZStack {
+                HydrationScene(fill: model.progress * introFactor, water: status.water, topInset: geo.safeAreaInsets.top)
+                    .animation(.spring(duration: 1.4), value: model.progress)
+                    .ignoresSafeArea()
+
+                // Hero: today's amount with the streak under it, in the vertical middle of the whole screen
+                VStack(spacing: 0) {
+                    HeroNumber(ml: Double(model.todayMl) * introFactor, color: status.accent)
+                        .animation(.smooth(duration: 0.6), value: model.todayMl)
+                    StreakLine(streak: model.streak)
                 }
-                .accessibilityElement(children: .combine)
-                .accessibilityAddTraits(.isHeader)
-                Spacer()
-                ConnectionButton { showConnections = true }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .ignoresSafeArea()
+
+                VStack(alignment: .leading, spacing: 24) {
+                    HStack {
+                        BottlePill()
+                        Spacer()
+                        CloudButton()
+                    }
+                    Text("\(greeting(model.now)), \(model.settings.username)")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundStyle(Theme.navy)
+                        .accessibilityAddTraits(.isHeader)
+                    Spacer()
+                    // The main action, within thumb reach above the tab bar
+                    AddButton { showAddSheet = true }
+                        .frame(maxWidth: .infinity)
+                        .padding(.bottom, 32)
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 12)
             }
-            .padding(.top, 12)
-
-            Spacer(minLength: 16)
-
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text("\(model.todayMl)")
-                    .font(.system(size: 88, weight: .semibold))
-                    .tracking(-2)
-                    .monospacedDigit()
-                    .contentTransition(.numericText(value: Double(model.todayMl)))
-                Text("ml")
-                    .font(.system(size: 30, weight: .semibold))
-            }
-            .foregroundStyle(status.accent)
-            .lineLimit(1)
-            .minimumScaleFactor(0.6)
-            .accessibilityElement(children: .combine)
-            Text("of \(model.settings.goalMl) ml daily goal")
-                .font(.callout.weight(.medium))
-                .foregroundStyle(Theme.muted)
-
-            StatusCard(message: message, streak: model.streak)
-                .padding(.top, 20)
-
-            Button {
-                showAddSheet = true
-            } label: {
-                Label("Add a drink", systemImage: "plus")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 28)
-                    .padding(.vertical, 15)
-                    .background(Theme.blue, in: Capsule())
-                    .shadow(color: Theme.blue.opacity(0.35), radius: 10, y: 4)
-            }
-            .buttonStyle(.pressable)
-            .padding(.top, 18)
-
-            Spacer(minLength: 16)
         }
-        .padding(.horizontal, 24)
-        .padding(.bottom, 140) // room for the sand and the flower
-        .animation(.default, value: model.todayMl)
-        .background {
-            GeometryReader { geo in
-                HydrationScene(fill: model.progress, goalMl: model.settings.goalMl, water: status.water,
-                               topInset: geo.safeAreaInsets.top, bottomInset: geo.safeAreaInsets.bottom)
-            }
-            .ignoresSafeArea()
-            .animation(.spring(duration: 1.4), value: model.progress)
-        }
+        .task(id: model.introRequest) { await playIntro() }
         .sheet(isPresented: $showAddSheet) {
             AddDrinkSheet(todayMl: model.todayMl, goalMl: model.settings.goalMl,
                           lastHourMl: Hydration.lastHour(model.entries, now: .now)) { ml in
                 model.addDrink(milliliters: ml)
                 showAddSheet = false
             }
-            .presentationDetents([.height(470)])
+            .presentationDetents([.height(500)])
             .presentationDragIndicator(.visible)
-            .presentationBackground(.white)
         }
-        .sheet(isPresented: $showConnections) {
-            ConnectionSheet()
-                .presentationDetents([.height(320)])
-                .presentationDragIndicator(.visible)
-                .presentationBackground(.white)
+    }
+
+    /// Counts the number up from 0 and raises the water with it, once per opening of the app.
+    private func playIntro() async {
+        let request = model.introRequest
+        guard model.introPlayed != request else { return }
+        intro = 0
+        introRunning = true
+        // On a cold start, wait briefly for the first load so it doesn't count up to 0
+        for _ in 0..<20 where model.entries.isEmpty {
+            try? await Task.sleep(for: .milliseconds(100))
+        }
+        guard !Task.isCancelled else { return }
+        withAnimation(.timingCurve(0.33, 1, 0.68, 1, duration: 1.2)) { // ease-out cubic
+            intro = 1
+        } completion: {
+            introRunning = false
+            model.introPlayed = request
+        }
+    }
+
+    private func greeting(_ now: Date) -> String {
+        switch Calendar.current.component(.hour, from: now) {
+        case 5...11: "Good morning"
+        case 12...17: "Good afternoon"
+        default: "Good evening"
         }
     }
 }
 
-/// What's going on right now plus the streak, in one card.
-private struct StatusCard: View {
-    let message: HydrationMessage
+/// Today's amount in large type. Animatable, so it counts through the values while it changes.
+private struct HeroNumber: View, Animatable {
+    var ml: Double
+    let color: Color
+
+    var animatableData: Double {
+        get { ml }
+        set { ml = newValue }
+    }
+
+    var body: some View {
+        let unit = Text("L").font(.system(size: 38, weight: .semibold))
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            // Invisible twin of the unit on the left, so the digits themselves are centred
+            unit.hidden()
+            Text(Liters.value(Int(ml.rounded())))
+                .font(.system(size: 128, weight: .semibold))
+                .tracking(-5)
+                .monospacedDigit()
+            unit
+        }
+        .foregroundStyle(color)
+        .lineLimit(1)
+        .minimumScaleFactor(0.5)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Liters.text(Int(ml.rounded())))
+    }
+}
+
+/// The streak as a small line under the number: a warm flame while it runs, grey at zero.
+private struct StreakLine: View {
     let streak: Int
 
     var body: some View {
-        HStack(spacing: 14) {
-            Image(systemName: message.status.symbol)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(message.status.accent)
-                .frame(width: 44, height: 44)
-                .background(message.status.accent.opacity(0.14), in: Circle())
-            VStack(alignment: .leading, spacing: 2) {
-                Text(message.title).font(.headline).foregroundStyle(Theme.ink)
-                Text(message.detail).font(.subheadline).foregroundStyle(Theme.muted)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .accessibilityElement(children: .combine)
-
-            Rectangle().fill(Theme.line).frame(width: 1, height: 40)
-
-            VStack(spacing: 0) {
-                HStack(spacing: 3) {
-                    Image(systemName: "flame.fill").font(.system(size: 15))
-                    Text("\(streak)").font(.title3.weight(.bold)).monospacedDigit()
-                }
-                .foregroundStyle(streak > 0 ? Theme.blue : Theme.noData)
-                Text(streak == 1 ? "day" : "days").font(.caption).foregroundStyle(Theme.muted)
-            }
-            .frame(minWidth: 44)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(streak)-day streak")
+        HStack(spacing: 2) {
+            Image(systemName: "flame.fill")
+                .font(.system(size: 22))
+                .foregroundStyle(streak > 0 ? Theme.flame : Theme.noData)
+            Text("\(streak)")
+                .font(.system(size: 24, weight: .bold))
+                .monospacedDigit()
+                .foregroundStyle(streak > 0 ? Theme.navy : Theme.muted)
         }
-        .padding(14)
-        .background(.white.opacity(0.94), in: RoundedRectangle(cornerRadius: 22))
-        .shadow(color: Theme.navy.opacity(0.08), radius: 12, y: 4)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(streak)-day streak")
     }
 }
 
-/// One indicator for everything the app is connected to; tap for details.
-private struct ConnectionButton: View {
+/// The bottle's connection and battery in one pill; tap to connect or disconnect.
+private struct BottlePill: View {
     @EnvironmentObject private var model: AppModel
-    let action: () -> Void
-
-    private var allGood: Bool { model.errorMessage == nil && model.isLive && model.bottle.link == .connected }
 
     private var text: String {
-        if model.errorMessage != nil { return "Offline" }
         switch model.bottle.link {
-        case .connected: return model.bottle.batteryPercent.map { "\($0) %" } ?? "Paired"
-        case .connecting: return "Pairing…"
-        case .disconnected: return "Bottle off"
+        case .connected: (["Paired"] + [model.bottle.batteryPercent.map { "\($0) %" }].compactMap { $0 }).joined(separator: " · ")
+        case .connecting: "Pairing…"
+        case .disconnected: "Bottle off"
         }
     }
 
     var body: some View {
-        Button(action: action) {
+        let connected = model.bottle.link == .connected
+        Button { model.toggleBottle() } label: {
             HStack(spacing: 6) {
-                Image(systemName: "waterbottle.fill").foregroundStyle(Theme.navy)
-                Text(text).font(.footnote.weight(.semibold)).foregroundStyle(Theme.ink)
+                Image(systemName: "waterbottle.fill")
+                    .foregroundStyle(Theme.navy)
+                    .opacity(connected ? 1 : 0.45)
+                Text(text)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.ink)
                 Circle()
-                    .fill(allGood ? Theme.blue : Theme.noData)
+                    .fill(connected ? Theme.blue : Theme.noData)
                     .frame(width: 8, height: 8)
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 9)
-            .background(.white, in: Capsule())
-            .shadow(color: Theme.navy.opacity(0.1), radius: 8, y: 2)
+            .padding(.vertical, 10)
+            .glassSurface(in: Capsule(), interactive: true)
         }
         .buttonStyle(.pressable)
-        .accessibilityLabel("Connections: \(text)")
-        .accessibilityHint("Shows the bottle and server status")
+        .accessibilityLabel("\(model.bottle.name): \(text)")
+        .accessibilityHint(model.bottle.link == .disconnected ? "Connects the bottle" : "Disconnects the bottle")
     }
 }
 
-private struct ConnectionSheet: View {
+/// Backend status as a cloud; tap to reload.
+private struct CloudButton: View {
     @EnvironmentObject private var model: AppModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            Text("Connections")
-                .font(.title2.weight(.semibold))
-                .foregroundStyle(Theme.ink)
-
-            ConnectionRow(symbol: "waterbottle.fill", title: model.bottle.name, detail: bottleDetail,
-                          ok: model.bottle.link == .connected) {
-                Button(model.bottle.link == .disconnected ? "Connect" : "Disconnect") { model.toggleBottle() }
-                    .buttonStyle(.bordered)
-                    .buttonBorderShape(.capsule)
-                    .tint(Theme.blue)
-            }
-
-            Divider().overlay(Theme.line)
-
-            ConnectionRow(symbol: "icloud.fill", title: "Drinkly server", detail: serverDetail,
-                          ok: model.errorMessage == nil && model.isLive) {
-                Button("Retry") { model.refresh() }
-                    .buttonStyle(.bordered)
-                    .buttonBorderShape(.capsule)
-                    .tint(Theme.blue)
-                    .opacity(model.errorMessage == nil ? 0 : 1)
-            }
+        let offline = model.errorMessage != nil
+        let (symbol, description) = offline
+            ? ("icloud.slash.fill", "Backend offline, tap to retry")
+            : model.isLive
+                ? ("checkmark.icloud.fill", "Live connection to the backend")
+                : ("arrow.clockwise.icloud.fill", "Connecting to the backend")
+        Button { model.refresh() } label: {
+            Image(systemName: symbol)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(offline ? Theme.red : Theme.blue)
+                .contentTransition(.symbolEffect(.replace))
+                .frame(width: 44, height: 44)
+                .glassSurface(in: Circle(), interactive: true)
         }
-        .padding(24)
-    }
-
-    private var bottleDetail: String {
-        switch model.bottle.link {
-        case .connected:
-            let battery = model.bottle.batteryPercent.map { "\($0) % battery" } ?? "Paired"
-            return battery + " · " + lastSyncText(model.bottle.lastSync, now: model.now)
-        case .connecting: return "Pairing…"
-        case .disconnected: return "Not connected"
-        }
-    }
-
-    private var serverDetail: String {
-        if let error = model.errorMessage { return error }
-        return model.isLive ? "Live updates" : "Connecting…"
-    }
-
-    private func lastSyncText(_ lastSync: Date?, now: Date) -> String {
-        guard let lastSync else { return "not synced yet" }
-        if now.timeIntervalSince(lastSync) < 60 { return "synced just now" }
-        return "synced " + RelativeDateTimeFormatter().localizedString(for: lastSync, relativeTo: now)
+        .buttonStyle(.pressable)
+        .accessibilityLabel(description)
     }
 }
 
-private struct ConnectionRow<Action: View>: View {
-    let symbol: String
-    let title: String
-    let detail: String
-    let ok: Bool
-    @ViewBuilder let action: Action
+/// The round plus that opens the add sheet.
+private struct AddButton: View {
+    let action: () -> Void
 
     var body: some View {
-        HStack(spacing: 14) {
-            Image(systemName: symbol)
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(ok ? .white : Theme.navy)
-                .frame(width: 44, height: 44)
-                .background(ok ? Theme.blue : Theme.sky, in: Circle())
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).fontWeight(.semibold).foregroundStyle(Theme.ink)
-                Text(detail).font(.footnote).foregroundStyle(Theme.muted)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .accessibilityElement(children: .combine)
-            action
+        Button(action: action) {
+            Image(systemName: "plus")
+                .font(.system(size: 30, weight: .semibold))
+                .foregroundStyle(Theme.blue)
+                .frame(width: 72, height: 72)
+                .glassSurface(in: Circle(), interactive: true, shadowRadius: 16)
         }
+        .buttonStyle(.pressable)
+        .accessibilityLabel("Add a drink")
     }
 }
 
@@ -256,22 +224,15 @@ private struct AddDrinkSheet: View {
     @State private var custom = 200
     @State private var showInfo = false
 
-    init(todayMl: Int, goalMl: Int, lastHourMl: Int, onAdd: @escaping (Int) -> Void) {
-        self.todayMl = todayMl
-        self.goalMl = goalMl
-        self.lastHourMl = lastHourMl
-        self.onAdd = onAdd
-    }
-
     private let presets = [("Cup", 150), ("Glass", 250), ("Can", 330), ("Bottle", 500)]
 
     /// A gentle hint when the amount would be more than the body needs.
     private var warning: String? {
         if lastHourMl + custom > Hydration.maxPerHourMl {
-            return "That's over 1 l within an hour. Better spread it out."
+            return "That's over 1 L within an hour. Better spread it out."
         }
         if Double(todayMl + custom) >= Double(goalMl) * Hydration.tooMuchFactor {
-            return "That brings you to \(todayMl + custom) ml, well above your goal."
+            return "That brings you to \(Liters.text(todayMl + custom)), well above your goal."
         }
         return nil
     }
@@ -310,8 +271,10 @@ private struct AddDrinkSheet: View {
                         onAdd(ml)
                     } label: {
                         VStack(spacing: 2) {
-                            Image(systemName: "drop.fill").foregroundStyle(Theme.blue)
-                            Text("\(ml) ml").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
+                            GlassIcon(level: min(Double(ml) / 600, 0.85))
+                                .frame(width: 20, height: 24)
+                                .padding(.bottom, 6)
+                            Text(Liters.text(ml)).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
                             Text(name).font(.caption).foregroundStyle(Theme.muted)
                         }
                         .frame(maxWidth: .infinity)
@@ -320,7 +283,7 @@ private struct AddDrinkSheet: View {
                         .overlay(RoundedRectangle(cornerRadius: 18).stroke(Theme.water, lineWidth: 1))
                     }
                     .buttonStyle(.pressable)
-                    .accessibilityLabel("Add \(name), \(ml) ml")
+                    .accessibilityLabel("Add \(name), \(Liters.text(ml))")
                 }
             }
             .padding(.top, 10)
@@ -328,7 +291,7 @@ private struct AddDrinkSheet: View {
             HStack(alignment: .firstTextBaseline) {
                 Text("Other amount").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
                 Spacer()
-                Text("\(custom) ml")
+                Text(Liters.text(custom))
                     .font(.title2.weight(.semibold))
                     .monospacedDigit()
                     .foregroundStyle(Theme.blue)
@@ -342,13 +305,16 @@ private struct AddDrinkSheet: View {
                 step: 50
             ) {
                 Text("Amount")
-            } minimumValueLabel: {
-                Text("50").font(.caption).foregroundStyle(Theme.muted)
-            } maximumValueLabel: {
-                Text("1000").font(.caption).foregroundStyle(Theme.muted)
             }
             .tint(Theme.blue)
-            .accessibilityValue("\(custom) ml")
+            .accessibilityValue(Liters.text(custom))
+            HStack {
+                Text(Liters.text(50))
+                Spacer()
+                Text(Liters.text(1000))
+            }
+            .font(.caption)
+            .foregroundStyle(Theme.muted)
 
             Group {
                 if let warning {
@@ -368,16 +334,47 @@ private struct AddDrinkSheet: View {
             Button {
                 onAdd(custom)
             } label: {
-                Text("Add \(custom) ml")
+                Text("Add \(Liters.text(custom))")
                     .font(.headline)
-                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Theme.blue, in: Capsule())
+                    .padding(.vertical, 6)
             }
-            .buttonStyle(.pressable)
+            .prominentCapsuleButton()
         }
         .padding(24)
         .animation(.default, value: custom)
+    }
+}
+
+/// A plain outlined glass, filled up to `level` (0…1).
+private struct GlassIcon: View {
+    let level: Double
+
+    var body: some View {
+        Canvas { context, size in
+            let inset: CGFloat = 1
+            let top = inset
+            let bottom = size.height - inset
+            let taper = size.width * 0.14
+            func left(_ y: CGFloat) -> CGFloat { inset + taper * (y - top) / (bottom - top) }
+            func right(_ y: CGFloat) -> CGFloat { size.width - inset - taper * (y - top) / (bottom - top) }
+
+            let waterTop = bottom - (bottom - top) * level
+            var water = Path()
+            water.move(to: CGPoint(x: left(waterTop), y: waterTop))
+            water.addLine(to: CGPoint(x: right(waterTop), y: waterTop))
+            water.addLine(to: CGPoint(x: right(bottom), y: bottom))
+            water.addLine(to: CGPoint(x: left(bottom), y: bottom))
+            water.closeSubpath()
+            context.fill(water, with: .color(Theme.blue.opacity(0.3)))
+
+            var glass = Path()
+            glass.move(to: CGPoint(x: inset, y: top))
+            glass.addLine(to: CGPoint(x: left(bottom), y: bottom))
+            glass.addLine(to: CGPoint(x: right(bottom), y: bottom))
+            glass.addLine(to: CGPoint(x: size.width - inset, y: top))
+            context.stroke(glass, with: .color(Theme.blue), style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+        }
+        .accessibilityHidden(true)
     }
 }

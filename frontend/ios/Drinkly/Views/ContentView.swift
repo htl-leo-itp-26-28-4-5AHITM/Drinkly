@@ -27,69 +27,77 @@ struct ContentView: View {
     @State private var tab = Tab.today
 
     var body: some View {
-        Group {
-            switch tab {
-            case .today: TodayView()
-            case .activity: ActivityView()
-            case .reminders: RemindersView()
-            case .profile: ProfileView()
+        // The system tab bar: Liquid Glass on iOS 26
+        TabView(selection: $tab) {
+            ForEach(Tab.allCases, id: \.self) { tab in
+                page(tab)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Theme.sky.ignoresSafeArea())
+                    .tabItem { Label(tab.title, systemImage: tab.symbol) }
+                    .tag(tab)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Theme.sky.ignoresSafeArea())
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            VStack(spacing: 10) {
-                if let toast = model.toast {
-                    Label {
-                        Text(toast).foregroundStyle(Theme.ink)
-                    } icon: {
-                        Image(systemName: "drop.circle.fill").foregroundStyle(Theme.blue)
-                    }
-                    .font(.subheadline.weight(.semibold))
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 11)
-                    .background(.white, in: Capsule())
-                    .overlay(Capsule().stroke(Theme.water, lineWidth: 1))
-                    .shadow(color: Theme.navy.opacity(0.15), radius: 12, y: 4)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
-                TabBar(selection: $tab)
+        .tint(Theme.blue)
+        .overlay(alignment: .top) {
+            if let added = model.added {
+                AddedNotice(drink: added) { model.undo(added) }
+                    .padding(.top, 8)
+                    .transition(.move(edge: .top).combined(with: .opacity))
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 4)
+        }
+        .overlay(alignment: .bottom) {
+            if let toast = model.toast {
+                Label {
+                    Text(toast).foregroundStyle(Theme.ink)
+                } icon: {
+                    Image(systemName: "drop.fill").foregroundStyle(Theme.blue)
+                }
+                .font(.subheadline.weight(.semibold))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 11)
+                .glassSurface(in: Capsule())
+                .padding(.bottom, 64) // above the tab bar
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func page(_ tab: Tab) -> some View {
+        switch tab {
+        case .today: TodayView()
+        case .activity: ActivityView()
+        case .reminders: RemindersView()
+        case .profile: ProfileView()
         }
     }
 }
 
-private struct TabBar: View {
-    @Binding var selection: Tab
+/// Small pill from the top after a drink was saved, with a plain-text "Undo".
+private struct AddedNotice: View {
+    let drink: AddedDrink
+    let onUndo: () -> Void
 
     var body: some View {
-        HStack(spacing: 0) {
-            ForEach(Tab.allCases, id: \.self) { tab in
-                let selected = tab == selection
-                Button {
-                    selection = tab
-                } label: {
-                    VStack(spacing: 3) {
-                        Image(systemName: tab.symbol)
-                            .font(.system(size: 20))
-                            .frame(height: 24)
-                        Text(tab.title)
-                            .font(.system(size: 11, weight: selected ? .semibold : .regular))
-                    }
-                    .foregroundStyle(selected ? Theme.blue : Theme.muted)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
-                    .background(selected ? Theme.sky : .clear, in: Capsule())
-                    .contentShape(Capsule())
-                }
-                .buttonStyle(.pressable)
-                .accessibilityAddTraits(selected ? [.isSelected] : [])
-            }
+        let amount = Liters.text(drink.entry.milliliters)
+        HStack(spacing: 6) {
+            Image(systemName: "drop.fill")
+                .font(.footnote)
+                .foregroundStyle(Theme.blue)
+            Text(drink.fromBottle ? "Synced \(amount)" : "Added \(amount)")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(Theme.ink)
+            Button("Undo", action: onUndo)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.blue)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .contentShape(Rectangle())
+                .buttonStyle(.plain)
         }
-        .padding(6)
-        .background(.white, in: Capsule())
-        .shadow(color: Theme.navy.opacity(0.15), radius: 16, y: 6)
+        .padding(.leading, 14)
+        .glassSurface(in: Capsule(), shadowRadius: 8)
+        .accessibilityElement(children: .combine)
+        .accessibilityAction(named: "Undo", onUndo)
     }
 }

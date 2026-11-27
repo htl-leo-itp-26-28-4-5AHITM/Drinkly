@@ -32,30 +32,25 @@ struct ActivityView: View {
 
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                Picker("Range", selection: $range) {
-                    ForEach(ActivityRange.allCases) { Text($0.rawValue).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                .padding(.top, 16)
-
                 if range == .calendar {
-                    CalendarCard(month: $calendarMonth)
+                    CalendarCard(month: $calendarMonth) { rangePicker }
+                        .padding(.top, 16)
                 } else {
                     Card {
                         Text((days.first!.date..<days.last!.date).formatted(.interval.day().month(.wide).year()))
                             .font(.headline)
                             .foregroundStyle(Theme.ink)
                         chart(days)
-                        Text("Dashed line: your goal at the time · gray: no drinks logged")
-                            .font(.caption)
-                            .foregroundStyle(Theme.muted)
+                        rangePicker
+                            .padding(.top, 6)
                     }
+                    .padding(.top, 16)
 
                     Grid(horizontalSpacing: 14, verticalSpacing: 14) {
                         GridRow {
                             StatTile(label: "Daily average",
-                                     value: active.isEmpty ? "–" : "\(active.map(\.ml).reduce(0, +) / active.count) ml")
-                            StatTile(label: "Best day", value: "\(days.map(\.ml).max() ?? 0) ml")
+                                     value: active.isEmpty ? "–" : Liters.text(active.map(\.ml).reduce(0, +) / active.count))
+                            StatTile(label: "Best day", value: Liters.text(days.map(\.ml).max() ?? 0))
                         }
                         GridRow {
                             StatTile(label: "Goal reached", value: "\(days.filter { $0.ml >= $0.goal }.count) of \(count) days")
@@ -79,6 +74,13 @@ struct ActivityView: View {
         }
     }
 
+    private var rangePicker: some View {
+        Picker("Range", selection: $range) {
+            ForEach(ActivityRange.allCases) { Text($0.rawValue).tag($0) }
+        }
+        .pickerStyle(.segmented)
+    }
+
     private func chart(_ days: [Day]) -> some View {
         let yMax = Double(max(days.map(\.goal).max() ?? 0, days.map(\.ml).max() ?? 0)) * 1.1
         let yStep: Double = yMax > 3000 ? 1000 : 500
@@ -87,6 +89,7 @@ struct ActivityView: View {
             .filter { days.count <= 7 || (days.count - 1 - $0.offset) % 5 == 0 }
             .map(\.element.date)
         let withData = Set(days.filter(\.hasData).map(\.date))
+        let currentGoal = Double(days.first?.goal ?? 0)
 
         return Chart {
             ForEach(days) { day in
@@ -113,8 +116,22 @@ struct ActivityView: View {
             AxisMarks(position: .leading, values: .stride(by: yStep)) { value in
                 AxisGridLine().foregroundStyle(Theme.line)
                 AxisValueLabel {
-                    Text(HydrationScene.liters(Int(value.as(Double.self) ?? 0)))
-                        .foregroundStyle(Theme.muted)
+                    let ml = value.as(Double.self) ?? 0
+                    // Left out where the "Goal" tag sits
+                    if abs(ml - currentGoal) > yStep * 0.3 {
+                        Text(Liters.text(Int(ml))).foregroundStyle(Theme.muted)
+                    }
+                }
+            }
+            // "Goal" tag on the y-axis where the goal line starts
+            AxisMarks(position: .leading, values: [currentGoal]) { _ in
+                AxisValueLabel {
+                    Text("Goal")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(Theme.sky) // contrasts with navy in light and dark mode
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1)
+                        .background(Theme.navy, in: Capsule())
                 }
             }
         }
@@ -139,9 +156,10 @@ struct ActivityView: View {
 }
 
 /// A month at a glance: the stronger the blue, the closer you got to your goal that day.
-private struct CalendarCard: View {
+private struct CalendarCard<Footer: View>: View {
     @EnvironmentObject private var model: AppModel
     @Binding var month: Date
+    @ViewBuilder var footer: Footer
 
     var body: some View {
         let calendar = Calendar.current
@@ -194,9 +212,8 @@ private struct CalendarCard: View {
             Text("Goal reached on \(reached) of \(past.count) days")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(Theme.ink)
-            Text("Stronger blue = closer to your goal · gray: no drinks logged")
-                .font(.caption)
-                .foregroundStyle(Theme.muted)
+            footer
+                .padding(.top, 6)
         }
     }
 
@@ -224,7 +241,7 @@ private struct DayCell: View {
             .frame(height: 38)
             .background(fill, in: Circle())
             .overlay(Circle().stroke(Theme.navy, lineWidth: isToday ? 2 : 0))
-            .accessibilityLabel(day.formatted(.dateTime.day().month(.wide)) + (ml > 0 ? ", \(ml) ml" : ", no drinks"))
+            .accessibilityLabel(day.formatted(.dateTime.day().month(.wide)) + (ml > 0 ? ", \(Liters.text(ml))" : ", no drinks"))
     }
 }
 
@@ -239,7 +256,7 @@ private struct StatTile: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(.white, in: RoundedRectangle(cornerRadius: 22))
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: 22))
         .accessibilityElement(children: .combine)
     }
 }
@@ -255,7 +272,7 @@ private struct DrinkRow: View {
                 .frame(width: 38, height: 38)
                 .background(Theme.sky, in: Circle())
             VStack(alignment: .leading, spacing: 0) {
-                Text("\(entry.milliliters) ml").fontWeight(.semibold).foregroundStyle(Theme.ink)
+                Text(Liters.text(entry.milliliters)).fontWeight(.semibold).foregroundStyle(Theme.ink)
                 Text(entry.timestamp.formatted(date: .abbreviated, time: .shortened))
                     .font(.caption)
                     .foregroundStyle(Theme.muted)
@@ -266,7 +283,7 @@ private struct DrinkRow: View {
                     .foregroundStyle(Theme.muted)
                     .frame(width: 44, height: 44)
             }
-            .accessibilityLabel("Remove \(entry.milliliters) ml")
+            .accessibilityLabel("Remove \(Liters.text(entry.milliliters))")
         }
     }
 }
