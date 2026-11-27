@@ -17,6 +17,7 @@ object DrinklyColors {
     val Muted = Color(0xFF627387)
     val Line = Color(0xFFE2EAF2)
     val NoData = Color(0xFFC9D2DC)
+    val Red = Color(0xFFD64545)
     val Card = Color.White
 }
 

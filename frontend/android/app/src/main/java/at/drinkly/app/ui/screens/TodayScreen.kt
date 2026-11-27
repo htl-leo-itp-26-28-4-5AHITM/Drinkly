@@ -34,6 +34,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.WaterDrop
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material.icons.rounded.LocalDrink
 import androidx.compose.material.icons.rounded.LocalFireDepartment
@@ -288,8 +289,9 @@ private fun ConnectionSheet(d: Dashboard, onBottle: () -> Unit, onRefresh: () ->
         ConnectionRow(
             icon = { Icon(Icons.Rounded.Cloud, contentDescription = null, tint = if (serverOk) Color.White else DrinklyColors.Navy) },
             title = "Drinkly server",
-            detail = d.sync.error ?: if (d.sync.live) "Live updates" else "Connecting…",
+            detail = if (serverOk) "Connected" else "Not connected",
             ok = serverOk,
+            failed = !serverOk,
         ) {
             if (d.sync.error != null) OutlinedButton(onClick = onRefresh) { Text("Retry") }
         }
@@ -297,7 +299,14 @@ private fun ConnectionSheet(d: Dashboard, onBottle: () -> Unit, onRefresh: () ->
 }
 
 @Composable
-private fun ConnectionRow(icon: @Composable () -> Unit, title: String, detail: String, ok: Boolean, action: @Composable () -> Unit) {
+private fun ConnectionRow(
+    icon: @Composable () -> Unit,
+    title: String,
+    detail: String,
+    ok: Boolean,
+    failed: Boolean = false, // red ✕ after the detail
+    action: @Composable () -> Unit,
+) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
             Modifier.size(44.dp).clip(CircleShape).background(if (ok) DrinklyColors.Blue else DrinklyColors.Sky),
@@ -306,7 +315,13 @@ private fun ConnectionRow(icon: @Composable () -> Unit, title: String, detail: S
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f).semantics(mergeDescendants = true) {}) {
             Text(title, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
-            Text(detail, fontSize = 13.sp, color = DrinklyColors.Muted)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(detail, fontSize = 13.sp, color = DrinklyColors.Muted)
+                if (failed) {
+                    Spacer(Modifier.width(4.dp))
+                    Icon(Icons.Rounded.Close, contentDescription = null, tint = DrinklyColors.Red, modifier = Modifier.size(16.dp))
+                }
+            }
         }
         action()
     }
