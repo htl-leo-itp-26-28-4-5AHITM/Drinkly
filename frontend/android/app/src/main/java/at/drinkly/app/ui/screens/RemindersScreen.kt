@@ -127,10 +127,8 @@ fun RemindersScreen(d: Dashboard, onUpdate: ((AppSettings) -> AppSettings) -> Un
                 ),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column(Modifier.weight(1f)) {
-                    Text("Only when I'm behind", fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
-                    Text("Skip reminders while you're on track", fontSize = 13.sp, color = DrinklyColors.Muted)
-                }
+                Text("Only when I'm behind", Modifier.weight(1f), fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
+                Spacer(Modifier.width(12.dp))
                 Switch(checked = s.onlyWhenBehind, onCheckedChange = null)
             }
         }
