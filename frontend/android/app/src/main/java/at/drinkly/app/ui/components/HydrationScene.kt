@@ -13,22 +13,19 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import at.drinkly.app.ui.theme.DrinklyColors
 import kotlin.math.PI
-import kotlin.math.min
 import kotlin.math.sin
 
-private const val MAX_SHARE = 1.25f
-
 /**
- * The Today background: water rising from the bottom edge (empty = nothing drunk yet).
+ * The Today background: water rising from the bottom edge (empty = nothing drunk yet) to the very top
+ * once the goal is reached.
  *
- * [fill] is today's intake divided by the goal; [topInset] keeps the water below the status bar.
+ * [fill] is today's intake divided by the goal.
  */
 @Composable
-fun HydrationScene(fill: Float, water: Color, topInset: Dp, modifier: Modifier = Modifier) {
+fun HydrationScene(fill: Float, water: Color, modifier: Modifier = Modifier) {
     val transition = rememberInfiniteTransition(label = "wave")
     val phase by transition.animateFloat(
         initialValue = 0f,
@@ -40,20 +37,19 @@ fun HydrationScene(fill: Float, water: Color, topInset: Dp, modifier: Modifier =
     Canvas(modifier) {
         val scale = SceneScale(
             zero = size.height + 12.dp.toPx(), // empty water hides below the screen
-            top = topInset.toPx() + 80.dp.toPx(),
+            full = -12.dp.toPx(), // at the goal even the wave crests are above the screen
         )
         drawRect(Brush.verticalGradient(listOf(Color.White, DrinklyColors.Sky)))
 
-        val top = scale.y(min(fill, MAX_SHARE))
+        val top = scale.y(fill)
         drawPath(wave(top, phase + PI.toFloat() * 0.8f, 8.dp.toPx()), water.copy(alpha = 0.55f))
         drawPath(wave(top, phase, 10.dp.toPx()), water)
-
     }
 }
 
-/** Maps a share of the goal to a height: 0 sits at [zero], the goal at about 80 % of the free space. */
-private class SceneScale(val zero: Float, val top: Float) {
-    fun y(share: Float) = zero - (zero - top) * 0.8f * share
+/** Maps a share of the goal to a height: 0 sits at [zero], the goal (and anything above it) at [full]. */
+private class SceneScale(val zero: Float, val full: Float) {
+    fun y(share: Float) = zero - (zero - full) * share.coerceIn(0f, 1f)
 }
 
 private fun DrawScope.wave(top: Float, phase: Float, amplitude: Float) = Path().apply {
