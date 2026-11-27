@@ -157,7 +157,7 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
                 Text("L", Modifier.alignByBaseline(), fontSize = 40.sp, fontWeight = FontWeight.SemiBold, color = accent)
             }
             d.entries.firstOrNull()?.let { last ->
-                Text(lastDrinkText(last.timestamp), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = DrinklyColors.Muted)
+                Text(lastDrinkText(last.timestamp), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = DrinklyColors.Navy.copy(alpha = 0.75f))
             }
             // The status card is hidden for now; bring it back with StatusCard(d.message, d.streak)
         }

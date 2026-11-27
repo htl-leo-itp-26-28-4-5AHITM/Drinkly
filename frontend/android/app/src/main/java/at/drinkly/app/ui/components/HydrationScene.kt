@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.dp
 import at.drinkly.app.ui.theme.DrinklyColors
@@ -48,7 +49,11 @@ fun HydrationScene(fill: Float, water: Color, modifier: Modifier = Modifier) {
 
         val top = scale.y(fill)
         drawPath(wave(top, phase + PI.toFloat() * 0.8f, 8.dp.toPx()), water.copy(alpha = 0.55f))
-        drawPath(wave(top, phase, 10.dp.toPx()), water)
+        // Clear at the surface, a little deeper towards the bottom
+        drawPath(
+            wave(top, phase, 10.dp.toPx()),
+            Brush.verticalGradient(listOf(water, lerp(water, DrinklyColors.Blue, 0.22f)), startY = top, endY = size.height),
+        )
     }
 }
 
