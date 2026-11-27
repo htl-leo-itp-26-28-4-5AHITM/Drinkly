@@ -218,10 +218,7 @@ private fun StatusCard(message: HydrationMessage, streak: Int) {
                 .padding(11.dp),
         )
         Spacer(Modifier.width(14.dp))
-        Column(Modifier.weight(1f).semantics(mergeDescendants = true) {}) {
-            Text(message.title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
-            Text(message.detail, fontSize = 14.sp, color = DrinklyColors.Muted)
-        }
+        Text(message.title, Modifier.weight(1f), fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
         Box(Modifier.padding(horizontal = 12.dp).width(1.dp).height(40.dp).background(DrinklyColors.Line))
         Column(
             Modifier.widthIn(min = 44.dp).clearAndSetSemantics { contentDescription = "$streak-day streak" },
