@@ -90,10 +90,9 @@ fun ActivityScreen(d: Dashboard, onDelete: (DrinkEntry) -> Unit) {
             .padding(top = 16.dp, bottom = 110.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        RangePicker(range, onChange = { range = it })
-
         if (range == ActivityRange.CALENDAR) {
             CalendarCard(d, month, onMonth = { month = it })
+            RangePicker(range, onChange = { range = it })
         } else {
             val days = (range.days - 1 downTo 0).map { d.today.minusDays(it.toLong()) }
             val values = days.map { d.totals[it] ?: 0 }
@@ -107,6 +106,7 @@ fun ActivityScreen(d: Dashboard, onDelete: (DrinkEntry) -> Unit) {
                 Spacer(Modifier.height(8.dp))
                 Text("Dashed line: your goal at the time · gray: no drinks logged", fontSize = 12.sp, color = DrinklyColors.Muted)
             }
+            RangePicker(range, onChange = { range = it })
 
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 StatTile("Daily average", if (activeDays.isEmpty()) "–" else "${activeDays.average().roundToInt()} ml", Modifier.weight(1f))
