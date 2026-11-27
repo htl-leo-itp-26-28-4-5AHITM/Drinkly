@@ -2,7 +2,6 @@ package at.drinkly.app.ui.screens
 
 import android.text.format.DateUtils
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
@@ -76,8 +75,10 @@ import at.drinkly.app.ui.components.pressScale
 import at.drinkly.app.ui.components.pressable
 import at.drinkly.app.ui.theme.DrinklyColors
 import at.drinkly.app.ui.theme.DrinklyIcons
+import at.drinkly.app.ui.theme.DrinklyType
+import at.drinkly.app.ui.theme.Nunito
 import at.drinkly.app.ui.theme.accent
-import at.drinkly.app.ui.theme.water
+import at.drinkly.app.ui.theme.accentInk
 import java.time.Duration
 import java.time.Instant
 import kotlin.math.roundToInt
@@ -88,8 +89,6 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
     var showAddSheet by rememberSaveable { mutableStateOf(false) }
     var showConnections by rememberSaveable { mutableStateOf(false) }
 
-    val accent by animateColorAsState(d.status.accent, label = "accent")
-    val water by animateColorAsState(d.status.water, label = "water")
     val fill by animateFloatAsState(d.progress, spring(stiffness = Spring.StiffnessVeryLow), label = "fill")
     val shownMl by animateIntAsState(d.todayMl, label = "ml")
 
@@ -97,7 +96,7 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
         HydrationScene(
             fill = fill,
             goalMl = d.settings.goalMl,
-            water = water,
+            water = DrinklyColors.Aqua,
             topInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
             modifier = Modifier.fillMaxSize(),
         )
@@ -107,11 +106,11 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 92.dp), // the floating bottom bar
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 88.dp), // the floating bottom bar
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Row(Modifier.padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Spacer(Modifier.weight(1f))
                 ConnectionPill(d) { showConnections = true }
             }
@@ -125,39 +124,36 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
                 Text(
                     litersValue(shownMl),
                     Modifier.alignByBaseline(),
-                    fontSize = 104.sp,
-                    lineHeight = 104.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = (-4).sp,
-                    color = accent,
+                    style = DrinklyType.Display.copy(fontSize = 96.sp, lineHeight = 96.sp, letterSpacing = (-2).sp),
+                    color = DrinklyColors.Tiefsee,
                 )
-                Spacer(Modifier.width(6.dp))
-                Text("L", Modifier.alignByBaseline(), fontSize = 32.sp, fontWeight = FontWeight.SemiBold, color = accent)
+                Spacer(Modifier.width(8.dp))
+                Text("L", Modifier.alignByBaseline(), style = DrinklyType.H1, color = DrinklyColors.Tiefsee)
             }
             Text(
                 "of ${liters(d.settings.goalMl)} daily goal",
-                fontSize = 17.sp,
+                style = DrinklyType.Text,
                 fontWeight = FontWeight.Medium,
-                color = DrinklyColors.Muted,
+                color = DrinklyColors.Tiefsee,
             )
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(24.dp))
             StatusCard(d.message, d.streak)
 
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(16.dp))
             val source = remember { MutableInteractionSource() }
             Button(
                 onClick = { showAddSheet = true },
                 interactionSource = source,
                 modifier = Modifier
                     .pressScale(source)
-                    .height(54.dp)
-                    .shadow(10.dp, RoundedCornerShape(50), spotColor = DrinklyColors.Blue.copy(alpha = 0.5f)),
-                contentPadding = PaddingValues(horizontal = 28.dp),
+                    .height(56.dp)
+                    .shadow(8.dp, RoundedCornerShape(50), spotColor = DrinklyColors.Tiefsee.copy(alpha = 0.5f)),
+                contentPadding = PaddingValues(horizontal = 32.dp),
             ) {
                 Icon(DrinklyIcons.Plus, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("Add a drink", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                Text("Add a drink", style = DrinklyType.Text, fontWeight = FontWeight.SemiBold)
             }
 
             Spacer(Modifier.weight(1f))
@@ -190,38 +186,38 @@ private val HydrationStatus.icon: ImageVector
 /** What's going on right now plus the streak, in one card. */
 @Composable
 private fun StatusCard(message: HydrationMessage, streak: Int) {
-    val shape = RoundedCornerShape(22.dp)
+    val shape = RoundedCornerShape(24.dp)
     val accent = message.status.accent
     Row(
         Modifier
             .fillMaxWidth()
-            .shadow(12.dp, shape, ambientColor = DrinklyColors.Navy.copy(alpha = 0.2f), spotColor = DrinklyColors.Navy.copy(alpha = 0.2f))
+            .shadow(16.dp, shape, ambientColor = DrinklyColors.Tiefsee.copy(alpha = 0.2f), spotColor = DrinklyColors.Tiefsee.copy(alpha = 0.2f))
             .clip(shape)
-            .background(Color.White.copy(alpha = 0.95f))
-            .padding(14.dp),
+            .background(Color.White)
+            .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            message.status.icon, contentDescription = null, tint = accent,
+            message.status.icon, contentDescription = null, tint = message.status.accentInk,
             modifier = Modifier
-                .size(44.dp)
+                .size(40.dp)
                 .clip(CircleShape)
-                .background(accent.copy(alpha = 0.14f))
-                .padding(11.dp),
+                .background(accent.copy(alpha = 0.16f))
+                .padding(8.dp),
         )
-        Spacer(Modifier.width(14.dp))
-        Text(message.title, Modifier.weight(1f), fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
-        Box(Modifier.padding(horizontal = 12.dp).width(1.dp).height(40.dp).background(DrinklyColors.Line))
+        Spacer(Modifier.width(16.dp))
+        Text(message.title, Modifier.weight(1f), style = DrinklyType.Text, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
+        Box(Modifier.padding(horizontal = 16.dp).width(1.dp).height(40.dp).background(DrinklyColors.Line))
         Column(
-            Modifier.widthIn(min = 44.dp).clearAndSetSemantics { contentDescription = "$streak-day streak" },
+            Modifier.widthIn(min = 48.dp).clearAndSetSemantics { contentDescription = "$streak-day streak" },
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            val color = if (streak > 0) DrinklyColors.Blue else DrinklyColors.NoData
+            val color = if (streak > 0) DrinklyColors.Tiefsee else DrinklyColors.Muted
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(DrinklyIcons.Flame, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
-                Text("$streak", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = color)
+                Icon(DrinklyIcons.Flame, contentDescription = null, tint = color, modifier = Modifier.size(16.dp))
+                Text("$streak", style = DrinklyType.H2, fontWeight = FontWeight.ExtraBold, color = color)
             }
-            Text(if (streak == 1) "day" else "days", fontSize = 12.sp, color = DrinklyColors.Muted)
+            Text(if (streak == 1) "day" else "days", style = DrinklyType.Caption, color = DrinklyColors.Muted)
         }
     }
 }
@@ -239,24 +235,24 @@ private fun ConnectionPill(d: Dashboard, onClick: () -> Unit) {
     val shape = RoundedCornerShape(50)
     Row(
         Modifier
-            .shadow(8.dp, shape, ambientColor = DrinklyColors.Navy.copy(alpha = 0.2f), spotColor = DrinklyColors.Navy.copy(alpha = 0.2f))
+            .shadow(8.dp, shape, ambientColor = DrinklyColors.Tiefsee.copy(alpha = 0.2f), spotColor = DrinklyColors.Tiefsee.copy(alpha = 0.2f))
             .pressable(shape, onClick = onClick)
             .background(Color.White)
-            .padding(horizontal = 12.dp, vertical = 9.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
             .clearAndSetSemantics { contentDescription = "Connections: $text. Shows the bottle and server status" },
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         BottleIllustration(Modifier.size(width = 9.dp, height = 20.dp))
-        Text(text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
-        Box(Modifier.size(8.dp).clip(CircleShape).background(if (allGood) DrinklyColors.Blue else DrinklyColors.NoData))
+        Text(text, style = DrinklyType.Small, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
+        Box(Modifier.size(8.dp).clip(CircleShape).background(if (allGood) DrinklyColors.Aqua else DrinklyColors.Line))
     }
 }
 
 @Composable
 private fun ConnectionSheet(d: Dashboard, onBottle: () -> Unit, onRefresh: () -> Unit) {
-    Column(Modifier.padding(horizontal = 24.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        Text("Connections", fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
+    Column(Modifier.padding(horizontal = 24.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text("Connections", style = DrinklyType.H2, color = DrinklyColors.Tiefsee)
 
         val bottleOk = d.bottle.link == BottleLink.CONNECTED
         ConnectionRow(
@@ -276,7 +272,7 @@ private fun ConnectionSheet(d: Dashboard, onBottle: () -> Unit, onRefresh: () ->
 
         val serverOk = d.sync.error == null && d.sync.live
         ConnectionRow(
-            icon = { Icon(DrinklyIcons.Cloud, contentDescription = null, tint = if (serverOk) Color.White else DrinklyColors.Navy) },
+            icon = { Icon(DrinklyIcons.Cloud, contentDescription = null, tint = if (serverOk) Color.White else DrinklyColors.Tiefsee) },
             title = "Drinkly server",
             detail = if (serverOk) "Connected" else "Not connected",
             ok = serverOk,
@@ -293,22 +289,22 @@ private fun ConnectionRow(
     title: String,
     detail: String,
     ok: Boolean,
-    failed: Boolean = false, // red ✕ after the detail
+    failed: Boolean = false, // red ✕ after the detail (Coral-Ink, the brand's only red)
     action: @Composable () -> Unit,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
-            Modifier.size(44.dp).clip(CircleShape).background(if (ok) DrinklyColors.Blue else DrinklyColors.Sky),
+            Modifier.size(48.dp).clip(CircleShape).background(if (ok) DrinklyColors.Tiefsee else DrinklyColors.Nebel),
             contentAlignment = Alignment.Center,
         ) { icon() }
-        Spacer(Modifier.width(14.dp))
+        Spacer(Modifier.width(16.dp))
         Column(Modifier.weight(1f).semantics(mergeDescendants = true) {}) {
             Text(title, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(detail, fontSize = 13.sp, color = DrinklyColors.Muted)
+                Text(detail, style = DrinklyType.Small, color = DrinklyColors.Muted)
                 if (failed) {
                     Spacer(Modifier.width(4.dp))
-                    Icon(DrinklyIcons.Close, contentDescription = null, tint = DrinklyColors.Red, modifier = Modifier.size(16.dp))
+                    Icon(DrinklyIcons.Close, contentDescription = null, tint = DrinklyColors.CoralInk, modifier = Modifier.size(16.dp))
                 }
             }
         }
@@ -342,10 +338,10 @@ private fun AddDrinkSheet(todayMl: Int, goalMl: Int, lastHourMl: Int, onAdd: (In
 
     Column(Modifier.padding(horizontal = 24.dp).padding(bottom = 32.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Add a drink", fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
+            Text("Add a drink", style = DrinklyType.H2, color = DrinklyColors.Tiefsee)
             Box {
                 IconButton(onClick = { showInfo = !showInfo }) {
-                    Icon(DrinklyIcons.Info, contentDescription = "About adding drinks", tint = DrinklyColors.Blue)
+                    Icon(DrinklyIcons.Info, contentDescription = "About adding drinks", tint = DrinklyColors.Tiefsee)
                 }
                 if (showInfo) {
                     Popup(
@@ -356,43 +352,44 @@ private fun AddDrinkSheet(todayMl: Int, goalMl: Int, lastHourMl: Int, onAdd: (In
                         Text(
                             "Sips from your Drinkly bottle are logged automatically. Add drinks from other glasses or bottles here.",
                             modifier = Modifier
-                                .width(260.dp)
-                                .shadow(12.dp, RoundedCornerShape(16.dp))
+                                .width(256.dp)
+                                .shadow(16.dp, RoundedCornerShape(16.dp))
                                 .clip(RoundedCornerShape(16.dp))
                                 .background(Color.White)
-                                .padding(14.dp),
-                            fontSize = 14.sp,
+                                .padding(16.dp),
+                            style = DrinklyType.Small,
                             color = DrinklyColors.Ink,
                         )
                     }
                 }
             }
         }
-        Spacer(Modifier.height(10.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             presets.forEach { (name, ml) ->
-                val shape = RoundedCornerShape(18.dp)
+                val shape = RoundedCornerShape(16.dp)
                 Column(
                     Modifier
                         .weight(1f)
                         .pressable(shape) { onAdd(ml) }
-                        .background(DrinklyColors.Sky)
-                        .border(1.dp, DrinklyColors.Water, shape)
-                        .padding(vertical = 14.dp)
+                        .background(DrinklyColors.Nebel)
+                        .border(1.dp, DrinklyColors.Line, shape)
+                        .padding(vertical = 16.dp)
                         .clearAndSetSemantics { contentDescription = "Add $name, ${liters(ml)}" },
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Icon(DrinklyIcons.GlassWater, contentDescription = null, tint = DrinklyColors.Blue)
-                    Text(liters(ml), fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
-                    Text(name, fontSize = 12.sp, color = DrinklyColors.Muted)
+                    Icon(DrinklyIcons.GlassWater, contentDescription = null, tint = DrinklyColors.Tiefsee)
+                    Spacer(Modifier.height(8.dp))
+                    Text(liters(ml), fontFamily = Nunito, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = DrinklyColors.Tiefsee)
+                    Text(name, style = DrinklyType.Caption, color = DrinklyColors.Muted)
                 }
             }
         }
 
         Spacer(Modifier.height(24.dp))
         Row(verticalAlignment = Alignment.Bottom) {
-            Text("Other amount", Modifier.weight(1f), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
-            Text(liters(custom), fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Blue)
+            Text("Other amount", Modifier.weight(1f), fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
+            Text(liters(custom), style = DrinklyType.H2, fontWeight = FontWeight.ExtraBold, color = DrinklyColors.Tiefsee)
         }
         Slider(
             value = amount,
@@ -402,8 +399,8 @@ private fun AddDrinkSheet(todayMl: Int, goalMl: Int, lastHourMl: Int, onAdd: (In
             modifier = Modifier.semantics { contentDescription = "Amount, ${liters(custom)}" },
         )
         Row {
-            Text(liters(50), Modifier.weight(1f), fontSize = 12.sp, color = DrinklyColors.Muted)
-            Text(liters(1000), fontSize = 12.sp, color = DrinklyColors.Muted)
+            Text(liters(50), Modifier.weight(1f), style = DrinklyType.Caption, color = DrinklyColors.Muted)
+            Text(liters(1000), style = DrinklyType.Caption, color = DrinklyColors.Muted)
         }
 
         AnimatedVisibility(warning != null) {
@@ -411,14 +408,14 @@ private fun AddDrinkSheet(todayMl: Int, goalMl: Int, lastHourMl: Int, onAdd: (In
                 Modifier
                     .padding(top = 8.dp)
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(DrinklyColors.Sky)
-                    .padding(10.dp),
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(DrinklyColors.Nebel)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(DrinklyIcons.Hand, contentDescription = null, tint = DrinklyColors.Navy, modifier = Modifier.size(16.dp))
+                Icon(DrinklyIcons.Hand, contentDescription = null, tint = DrinklyColors.Tiefsee, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(8.dp))
-                Text(warning.orEmpty(), fontSize = 13.sp, color = DrinklyColors.Navy)
+                Text(warning.orEmpty(), style = DrinklyType.Small, color = DrinklyColors.Tiefsee)
             }
         }
 
@@ -427,9 +424,9 @@ private fun AddDrinkSheet(todayMl: Int, goalMl: Int, lastHourMl: Int, onAdd: (In
         Button(
             onClick = { onAdd(custom) },
             interactionSource = source,
-            modifier = Modifier.pressScale(source).fillMaxWidth().height(54.dp),
+            modifier = Modifier.pressScale(source).fillMaxWidth().height(56.dp),
         ) {
-            Text("Add ${liters(custom)}", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
+            Text("Add ${liters(custom)}", style = DrinklyType.Text, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
         }
     }
 }

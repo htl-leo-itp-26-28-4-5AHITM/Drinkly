@@ -57,6 +57,8 @@ import at.drinkly.app.ui.Dashboard
 import at.drinkly.app.ui.components.SectionCard
 import at.drinkly.app.ui.theme.DrinklyColors
 import at.drinkly.app.ui.theme.DrinklyIcons
+import at.drinkly.app.ui.theme.DrinklyType
+import at.drinkly.app.ui.theme.Inter
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle as DateTextStyle
@@ -82,9 +84,9 @@ fun ActivityScreen(d: Dashboard, onDelete: (DrinkEntry) -> Unit) {
             .verticalScroll(rememberScrollState())
             .statusBarsPadding()
             .navigationBarsPadding()
-            .padding(horizontal = 20.dp)
-            .padding(top = 16.dp, bottom = 110.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+            .padding(horizontal = 16.dp)
+            .padding(top = 16.dp, bottom = 112.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         if (range == ActivityRange.CALENDAR) {
             CalendarCard(d, month, onMonth = { month = it }) {
@@ -97,18 +99,18 @@ fun ActivityScreen(d: Dashboard, onDelete: (DrinkEntry) -> Unit) {
             val activeDays = values.filter { it > 0 }
 
             SectionCard {
-                Text(periodTitle(days.first(), days.last()), fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
-                Spacer(Modifier.height(10.dp))
+                Text(periodTitle(days.first(), days.last()), style = DrinklyType.H2, color = DrinklyColors.Tiefsee)
+                Spacer(Modifier.height(8.dp))
                 BarChart(days, values, goals, Modifier.fillMaxWidth().height(220.dp))
                 Spacer(Modifier.height(16.dp))
                 RangePicker(range, onChange = { range = it })
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 StatTile("Daily average", if (activeDays.isEmpty()) "–" else liters(activeDays.average().roundToInt()), Modifier.weight(1f))
                 StatTile("Best day", liters(values.maxOrNull() ?: 0), Modifier.weight(1f))
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 StatTile("Goal reached", "${values.indices.count { values[it] >= goals[it] }} of ${range.days} days", Modifier.weight(1f))
                 StatTile("Longest streak", "${d.longestStreak} days", Modifier.weight(1f))
             }
@@ -139,7 +141,7 @@ private fun RangePicker(range: ActivityRange, onChange: (ActivityRange) -> Unit)
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(50))
-            .background(DrinklyColors.Sky)
+            .background(DrinklyColors.Nebel)
             .padding(4.dp)
             .selectableGroup(),
     ) {
@@ -150,7 +152,7 @@ private fun RangePicker(range: ActivityRange, onChange: (ActivityRange) -> Unit)
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(50))
-                    .background(if (selected) DrinklyColors.Blue else Color.Transparent)
+                    .background(if (selected) DrinklyColors.Tiefsee else Color.Transparent)
                     .selectable(selected, role = Role.Tab, onClick = { onChange(option) })
                     .padding(vertical = 8.dp),
                 textAlign = TextAlign.Center,
@@ -161,7 +163,7 @@ private fun RangePicker(range: ActivityRange, onChange: (ActivityRange) -> Unit)
     }
 }
 
-/** A month at a glance: the stronger the blue, the closer you got to your goal that day. */
+/** A month at a glance: the stronger the Aqua, the closer you got to your goal that day; Mint once it was reached. */
 @Composable
 private fun CalendarCard(d: Dashboard, month: YearMonth, onMonth: (YearMonth) -> Unit, footer: @Composable () -> Unit) {
     val locale = Locale.getDefault()
@@ -175,44 +177,42 @@ private fun CalendarCard(d: Dashboard, month: YearMonth, onMonth: (YearMonth) ->
     SectionCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { onMonth(month.minusMonths(1)) }) {
-                Icon(DrinklyIcons.ChevronLeft, contentDescription = "Previous month", tint = DrinklyColors.Blue)
+                Icon(DrinklyIcons.ChevronLeft, contentDescription = "Previous month", tint = DrinklyColors.Tiefsee)
             }
             Text(
                 month.format(DateTimeFormatter.ofPattern("MMMM yyyy")),
                 Modifier.weight(1f),
                 textAlign = TextAlign.Center,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = DrinklyColors.Ink,
+                style = DrinklyType.H2,
+                color = DrinklyColors.Tiefsee,
             )
             IconButton(onClick = { onMonth(month.plusMonths(1)) }, enabled = month < YearMonth.from(d.today)) {
-                Icon(DrinklyIcons.ChevronRight, contentDescription = "Next month")
+                Icon(DrinklyIcons.ChevronRight, contentDescription = "Next month", tint = if (month < YearMonth.from(d.today)) DrinklyColors.Tiefsee else DrinklyColors.Line)
             }
         }
-        Row(Modifier.padding(vertical = 6.dp)) {
+        Row(Modifier.padding(vertical = 8.dp)) {
             (0 until 7).forEach { i ->
                 Text(
                     firstDay.plus(i.toLong()).getDisplayName(DateTextStyle.NARROW, locale),
                     Modifier.weight(1f),
                     textAlign = TextAlign.Center,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    style = DrinklyType.Caption,
                     color = DrinklyColors.Muted,
                 )
             }
         }
         cells.chunked(7).forEach { week ->
-            Row(Modifier.padding(vertical = 3.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(Modifier.padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 (0 until 7).forEach { i ->
                     val day = week.getOrNull(i)
-                    Box(Modifier.weight(1f).height(38.dp), contentAlignment = Alignment.Center) {
+                    Box(Modifier.weight(1f).height(40.dp), contentAlignment = Alignment.Center) {
                         if (day != null) DayCell(day, d.totals[day] ?: 0, d.goalOn(day), day == d.today, day.isAfter(d.today))
                     }
                 }
             }
         }
-        Spacer(Modifier.height(10.dp))
-        Text("Goal reached on $reached of ${past.size} days", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
+        Spacer(Modifier.height(8.dp))
+        Text("Goal reached on $reached of ${past.size} days", fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
         Spacer(Modifier.height(16.dp))
         footer()
     }
@@ -223,27 +223,28 @@ private fun DayCell(day: LocalDate, ml: Int, goal: Int, isToday: Boolean, isFutu
     val share = (ml.toFloat() / goal).coerceIn(0f, 1f)
     val fill = when {
         isFuture -> Color.Transparent
-        ml == 0 -> DrinklyColors.NoData.copy(alpha = 0.35f)
-        else -> DrinklyColors.Blue.copy(alpha = 0.2f + 0.8f * share)
+        ml == 0 -> DrinklyColors.Line.copy(alpha = 0.5f)
+        share >= 1f -> DrinklyColors.Mint
+        else -> DrinklyColors.Aqua.copy(alpha = 0.15f + 0.6f * share)
     }
+    // Tiefsee reads on Aqua and Mint (white would not)
     val text = when {
         isFuture -> DrinklyColors.Muted.copy(alpha = 0.5f)
         ml == 0 -> DrinklyColors.Muted
-        share > 0.5f -> Color.White
-        else -> DrinklyColors.Ink
+        else -> DrinklyColors.Tiefsee
     }
     Box(
         Modifier
-            .size(38.dp)
+            .size(40.dp)
             .clip(CircleShape)
             .background(fill)
-            .border(if (isToday) 2.dp else 0.dp, if (isToday) DrinklyColors.Navy else Color.Transparent, CircleShape)
+            .border(if (isToday) 2.dp else 0.dp, if (isToday) DrinklyColors.Tiefsee else Color.Transparent, CircleShape)
             .clearAndSetSemantics {
                 contentDescription = day.format(DateTimeFormatter.ofPattern("d MMMM")) + if (ml > 0) ", ${liters(ml)}" else ", no drinks"
             },
         contentAlignment = Alignment.Center,
     ) {
-        Text("${day.dayOfMonth}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = text)
+        Text("${day.dayOfMonth}", style = DrinklyType.Small, fontWeight = FontWeight.SemiBold, color = text)
     }
 }
 
@@ -251,20 +252,20 @@ private fun DayCell(day: LocalDate, ml: Int, goal: Int, isToday: Boolean, isFutu
 private fun StatTile(label: String, value: String, modifier: Modifier = Modifier) {
     Column(
         modifier
-            .clip(RoundedCornerShape(22.dp))
+            .clip(RoundedCornerShape(24.dp))
             .background(Color.White)
             .padding(16.dp),
     ) {
-        Text(label, fontSize = 13.sp, color = DrinklyColors.Muted)
-        Text(value, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
+        Text(label, style = DrinklyType.Small, color = DrinklyColors.Muted)
+        Text(value, style = DrinklyType.H2, fontWeight = FontWeight.ExtraBold, color = DrinklyColors.Tiefsee)
     }
 }
 
 @Composable
 private fun BarChart(days: List<LocalDate>, values: List<Int>, goals: List<Int>, modifier: Modifier = Modifier) {
     val measurer = rememberTextMeasurer()
-    val labelStyle = TextStyle(fontSize = 11.sp, color = DrinklyColors.Ink)
-    val goalStyle = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+    val labelStyle = TextStyle(fontFamily = Inter, fontSize = 11.sp, color = DrinklyColors.Ink)
+    val goalStyle = TextStyle(fontFamily = Inter, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
     val weekdayFormat = DateTimeFormatter.ofPattern("EEE")
     val dayMonthFormat = DateTimeFormatter.ofPattern("d MMM")
 
@@ -301,14 +302,14 @@ private fun BarChart(days: List<LocalDate>, values: List<Int>, goals: List<Int>,
             if (value > 0) {
                 val top = y(value).coerceAtMost(chartHeight - 4.dp.toPx())
                 drawRoundRect(
-                    color = if (value >= goals[i]) DrinklyColors.Blue else DrinklyColors.Blue.copy(alpha = 0.45f),
+                    color = if (value >= goals[i]) DrinklyColors.Mint else DrinklyColors.Aqua,
                     topLeft = Offset(x, top),
                     size = Size(barWidth, chartHeight - top),
                     cornerRadius = radius,
                 )
             } else {
                 // Grayed-out column: the bottle wasn't used and nothing was logged
-                drawRoundRect(DrinklyColors.NoData.copy(alpha = 0.3f), Offset(x, 0f), Size(barWidth, chartHeight), radius)
+                drawRoundRect(DrinklyColors.Line.copy(alpha = 0.5f), Offset(x, 0f), Size(barWidth, chartHeight), radius)
             }
 
             val showLabel = days.size <= 7 || (days.size - 1 - i) % 5 == 0
@@ -333,11 +334,11 @@ private fun BarChart(days: List<LocalDate>, values: List<Int>, goals: List<Int>,
         }
         drawPath(
             goalPath,
-            color = DrinklyColors.Navy.copy(alpha = 0.7f),
+            color = DrinklyColors.Tiefsee.copy(alpha = 0.7f),
             style = Stroke(width = 1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f))),
         )
         val pillLeft = axisWidth - 2.dp.toPx() - pillWidth
-        drawRoundRect(DrinklyColors.Navy, Offset(pillLeft, pillTop), Size(pillWidth, pillHeight), CornerRadius(pillHeight / 2))
+        drawRoundRect(DrinklyColors.Tiefsee, Offset(pillLeft, pillTop), Size(pillWidth, pillHeight), CornerRadius(pillHeight / 2))
         drawText(goalLabel, topLeft = Offset(pillLeft + 5.dp.toPx(), pillTop + 2.dp.toPx()))
     }
 }
@@ -346,21 +347,21 @@ private val timeFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT
 
 @Composable
 private fun DrinkRow(entry: DrinkEntry, onDelete: (DrinkEntry) -> Unit) {
-    Row(Modifier.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Icon(
-            DrinklyIcons.GlassWater, contentDescription = null, tint = DrinklyColors.Blue,
+            DrinklyIcons.GlassWater, contentDescription = null, tint = DrinklyColors.Tiefsee,
             modifier = Modifier
-                .size(38.dp)
+                .size(40.dp)
                 .clip(CircleShape)
-                .background(DrinklyColors.Sky)
-                .padding(9.dp),
+                .background(DrinklyColors.Nebel)
+                .padding(8.dp),
         )
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(16.dp))
         Column(Modifier.weight(1f)) {
             Text(liters(entry.milliliters), fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
             Text(
                 entry.timestamp.atZone(ZoneId.systemDefault()).format(timeFormat),
-                fontSize = 12.sp, color = DrinklyColors.Muted,
+                style = DrinklyType.Caption, color = DrinklyColors.Muted,
             )
         }
         IconButton(onClick = { onDelete(entry) }) {

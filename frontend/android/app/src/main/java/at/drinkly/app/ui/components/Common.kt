@@ -27,19 +27,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import at.drinkly.app.ui.theme.DrinklyColors
+import at.drinkly.app.ui.theme.DrinklyType
 
 @Composable
 fun SectionCard(title: String? = null, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     Column(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
+            .clip(RoundedCornerShape(24.dp))
             .background(DrinklyColors.Card)
-            .padding(18.dp),
+            .padding(16.dp),
     ) {
         if (title != null) {
-            Text(title, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Muted)
-            Spacer(Modifier.height(10.dp))
+            // Eyebrow label like the chapter marks in the corporate design manual
+            Text(
+                title.uppercase(),
+                style = DrinklyType.Caption,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 1.sp,
+                color = DrinklyColors.AquaInk,
+            )
+            Spacer(Modifier.height(8.dp))
         }
         content()
     }

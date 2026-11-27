@@ -58,6 +58,8 @@ class ReminderWorker(context: Context, params: WorkerParameters) : CoroutineWork
             )
             val notification = NotificationCompat.Builder(context, ReminderScheduler.CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_drop)
+                // Coral is the corporate design's signal colour for reminders
+                .setColor(ContextCompat.getColor(context, R.color.coral))
                 .setContentTitle(title)
                 .setContentText(text)
                 .setContentIntent(open)

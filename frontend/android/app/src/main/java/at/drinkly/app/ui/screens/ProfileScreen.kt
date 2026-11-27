@@ -62,6 +62,8 @@ import at.drinkly.app.ui.components.BottleIllustration
 import at.drinkly.app.ui.components.SectionCard
 import at.drinkly.app.ui.theme.DrinklyColors
 import at.drinkly.app.ui.theme.DrinklyIcons
+import at.drinkly.app.ui.theme.DrinklyType
+import at.drinkly.app.ui.theme.Inter
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -82,32 +84,32 @@ fun ProfileScreen(
             .verticalScroll(rememberScrollState())
             .statusBarsPadding()
             .navigationBarsPadding()
-            .padding(horizontal = 20.dp)
-            .padding(top = 16.dp, bottom = 110.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+            .padding(horizontal = 16.dp)
+            .padding(top = 16.dp, bottom = 112.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
-                Modifier.size(64.dp).clip(CircleShape).background(DrinklyColors.Blue),
+                Modifier.size(64.dp).clip(CircleShape).background(DrinklyColors.Tiefsee),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(s.username.take(2).uppercase(), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
+                Text(s.username.take(2).uppercase(), style = DrinklyType.H2, fontWeight = FontWeight.ExtraBold, color = Color.White)
             }
             Spacer(Modifier.width(16.dp))
             Column {
-                Text(s.username, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
-                Text("${d.streak}-day streak · ${liters(s.goalMl)} goal", color = DrinklyColors.Muted)
+                Text(s.username, style = DrinklyType.H2, color = DrinklyColors.Tiefsee)
+                Text("${d.streak}-day streak · ${liters(s.goalMl)} goal", style = DrinklyType.Small, color = DrinklyColors.Muted)
             }
         }
 
         SectionCard("Name") {
             CommitTextField(s.username, onCommit = { name -> onUpdate { it.copy(username = name) } })
-            Spacer(Modifier.height(6.dp))
-            Text("Your drinks are stored under this name in the backend.", fontSize = 13.sp, color = DrinklyColors.Muted)
+            Spacer(Modifier.height(8.dp))
+            Text("Your drinks are stored under this name in the backend.", style = DrinklyType.Small, color = DrinklyColors.Muted)
         }
 
         SectionCard("Daily goal") {
-            Text(liters(s.goalMl), fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Blue)
+            Text(liters(s.goalMl), style = DrinklyType.Number, color = DrinklyColors.Tiefsee)
             Slider(
                 value = s.goalMl.toFloat(),
                 onValueChange = { v -> onUpdate { it.copy(goalMl = (v / 50).roundToInt() * 50) } },
@@ -120,7 +122,7 @@ fun ProfileScreen(
                 ) { Icon(DrinklyIcons.Minus, contentDescription = "Less weight") }
                 Text(
                     "${s.weightKg} kg", Modifier.width(72.dp), textAlign = TextAlign.Center,
-                    fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink,
+                    style = DrinklyType.H2, fontWeight = FontWeight.ExtraBold, color = DrinklyColors.Tiefsee,
                 )
                 FilledTonalIconButton(
                     onClick = { onUpdate { it.copy(weightKg = (it.weightKg + 1).coerceAtMost(200)) } },
@@ -128,7 +130,7 @@ fun ProfileScreen(
             }
             val suggested = Hydration.suggestedGoal(s.weightKg)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Suggested: ${liters(suggested)}", Modifier.weight(1f), fontSize = 13.sp, color = DrinklyColors.Muted)
+                Text("Suggested: ${liters(suggested)}", Modifier.weight(1f), style = DrinklyType.Small, color = DrinklyColors.Muted)
                 TextButton(
                     onClick = { onUpdate { it.copy(goalMl = suggested.coerceIn(1000, 4000)) } },
                     enabled = suggested != s.goalMl,
@@ -147,14 +149,14 @@ fun ProfileScreen(
                 } else {
                     "Your goal hasn't changed yet. When you change it, this line shows what it was before."
                 },
-                fontSize = 13.sp, color = DrinklyColors.Muted,
+                style = DrinklyType.Small, color = DrinklyColors.Muted,
             )
         }
 
         SectionCard("Bottle") {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 BottleIllustration(Modifier.size(width = 28.dp, height = 70.dp), dimmed = d.bottle.link != BottleLink.CONNECTED)
-                Spacer(Modifier.width(14.dp))
+                Spacer(Modifier.width(16.dp))
                 Column(Modifier.weight(1f)) {
                     Text(d.bottle.name, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
                     Text(
@@ -163,7 +165,7 @@ fun ProfileScreen(
                             BottleLink.CONNECTING -> "Pairing…"
                             BottleLink.DISCONNECTED -> "Not connected"
                         },
-                        fontSize = 13.sp, color = DrinklyColors.Muted,
+                        style = DrinklyType.Small, color = DrinklyColors.Muted,
                     )
                 }
                 Button(onClick = onToggleBottle) {
@@ -171,15 +173,15 @@ fun ProfileScreen(
                 }
             }
             if (d.bottle.link == BottleLink.CONNECTED) {
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(8.dp))
                 OutlinedButton(onClick = { onSimulateSip(250) }, modifier = Modifier.fillMaxWidth()) {
                     Text("Simulate a ${liters(250)} sip")
                 }
             }
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(8.dp))
             Text(
                 "Demo mode: the bottle is simulated until its Bluetooth profile is available.",
-                fontSize = 12.sp, color = DrinklyColors.Muted,
+                style = DrinklyType.Caption, color = DrinklyColors.Muted,
             )
         }
 
@@ -188,13 +190,13 @@ fun ProfileScreen(
             Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val (color, text) = when {
-                    d.sync.error != null -> DrinklyColors.NoData to "Not reachable"
-                    d.sync.live -> DrinklyColors.Blue to "Live connection"
+                    d.sync.error != null -> DrinklyColors.Line to "Not reachable"
+                    d.sync.live -> DrinklyColors.Aqua to "Live connection"
                     else -> DrinklyColors.Muted to "Connecting…"
                 }
                 Box(Modifier.size(8.dp).clip(CircleShape).background(color))
                 Spacer(Modifier.width(8.dp))
-                Text(text, fontSize = 13.sp, color = DrinklyColors.Muted)
+                Text(text, style = DrinklyType.Small, color = DrinklyColors.Muted)
             }
         }
     }
@@ -204,7 +206,7 @@ fun ProfileScreen(
 @Composable
 private fun GoalHistoryChart(d: Dashboard, modifier: Modifier = Modifier) {
     val measurer = rememberTextMeasurer()
-    val style = TextStyle(fontSize = 11.sp, color = DrinklyColors.Muted)
+    val style = TextStyle(fontFamily = Inter, fontSize = 11.sp, color = DrinklyColors.Muted)
     // Last 30 days, or back to the first real change (the first entry is the "since always" goal)
     val start = minOf(d.today.minusDays(30), d.goalHistory.getOrNull(1)?.day ?: d.today)
     val totalDays = ChronoUnit.DAYS.between(start, d.today).toFloat()
@@ -241,8 +243,8 @@ private fun GoalHistoryChart(d: Dashboard, modifier: Modifier = Modifier) {
             lineTo(x(start), h)
             close()
         }
-        drawPath(area, DrinklyColors.Blue.copy(alpha = 0.12f))
-        drawPath(line, DrinklyColors.Blue, style = Stroke(width = 2.dp.toPx()))
+        drawPath(area, DrinklyColors.Aqua.copy(alpha = 0.2f))
+        drawPath(line, DrinklyColors.AquaInk, style = Stroke(width = 2.dp.toPx()))
 
         listOf(start, start.plusDays((totalDays / 2).toLong()), d.today).forEachIndexed { i, day ->
             val layout = measurer.measure(day.format(dateFormat), style)
@@ -269,14 +271,14 @@ private fun CommitTextField(
         value = text,
         onValueChange = { text = it },
         singleLine = true,
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth(),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(onDone = { if (changed) onCommit(text.trim()) }),
         trailingIcon = {
             if (changed) {
                 IconButton(onClick = { onCommit(text.trim()) }) {
-                    Icon(DrinklyIcons.Check, contentDescription = "Save", tint = DrinklyColors.Blue)
+                    Icon(DrinklyIcons.Check, contentDescription = "Save", tint = DrinklyColors.Tiefsee)
                 }
             }
         },
