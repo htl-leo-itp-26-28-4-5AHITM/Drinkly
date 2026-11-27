@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -107,8 +106,6 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
             goalMl = d.settings.goalMl,
             water = water,
             topInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
-            // the floating bottom bar takes about 92 dp above the navigation bar
-            bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 92.dp,
             modifier = Modifier.fillMaxSize(),
         )
 
@@ -118,7 +115,7 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
                 .statusBarsPadding()
                 .navigationBarsPadding()
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 92.dp + 140.dp), // bottom bar, then room for the sand and the flower
+                .padding(bottom = 92.dp), // the floating bottom bar
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Row(Modifier.padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
