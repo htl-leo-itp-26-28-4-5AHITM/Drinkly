@@ -56,9 +56,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import at.drinkly.app.data.liters
 import at.drinkly.app.data.DrinkEntry
 import at.drinkly.app.ui.Dashboard
-import at.drinkly.app.ui.components.liters
 import at.drinkly.app.ui.components.SectionCard
 import at.drinkly.app.ui.theme.DrinklyColors
 import java.time.LocalDate
@@ -109,8 +109,8 @@ fun ActivityScreen(d: Dashboard, onDelete: (DrinkEntry) -> Unit) {
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                StatTile("Daily average", if (activeDays.isEmpty()) "–" else "${activeDays.average().roundToInt()} ml", Modifier.weight(1f))
-                StatTile("Best day", "${values.maxOrNull() ?: 0} ml", Modifier.weight(1f))
+                StatTile("Daily average", if (activeDays.isEmpty()) "–" else liters(activeDays.average().roundToInt()), Modifier.weight(1f))
+                StatTile("Best day", liters(values.maxOrNull() ?: 0), Modifier.weight(1f))
             }
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 StatTile("Goal reached", "${values.indices.count { values[it] >= goals[it] }} of ${range.days} days", Modifier.weight(1f))
@@ -243,7 +243,7 @@ private fun DayCell(day: LocalDate, ml: Int, goal: Int, isToday: Boolean, isFutu
             .background(fill)
             .border(if (isToday) 2.dp else 0.dp, if (isToday) DrinklyColors.Navy else Color.Transparent, CircleShape)
             .clearAndSetSemantics {
-                contentDescription = day.format(DateTimeFormatter.ofPattern("d MMMM")) + if (ml > 0) ", $ml ml" else ", no drinks"
+                contentDescription = day.format(DateTimeFormatter.ofPattern("d MMMM")) + if (ml > 0) ", ${liters(ml)}" else ", no drinks"
             },
         contentAlignment = Alignment.Center,
     ) {
@@ -361,14 +361,14 @@ private fun DrinkRow(entry: DrinkEntry, onDelete: (DrinkEntry) -> Unit) {
         )
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text("${entry.milliliters} ml", fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
+            Text(liters(entry.milliliters), fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
             Text(
                 entry.timestamp.atZone(ZoneId.systemDefault()).format(timeFormat),
                 fontSize = 12.sp, color = DrinklyColors.Muted,
             )
         }
         IconButton(onClick = { onDelete(entry) }) {
-            Icon(Icons.Rounded.DeleteOutline, contentDescription = "Remove ${entry.milliliters} ml", tint = DrinklyColors.Muted)
+            Icon(Icons.Rounded.DeleteOutline, contentDescription = "Remove ${liters(entry.milliliters)}", tint = DrinklyColors.Muted)
         }
     }
 }

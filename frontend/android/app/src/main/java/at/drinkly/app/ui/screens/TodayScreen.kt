@@ -74,6 +74,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import at.drinkly.app.data.liters
+import at.drinkly.app.data.litersValue
 import at.drinkly.app.bottle.BottleLink
 import at.drinkly.app.data.Hydration
 import at.drinkly.app.data.HydrationMessage
@@ -131,7 +133,7 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
                 verticalAlignment = Alignment.Bottom,
             ) {
                 Text(
-                    "$shownMl",
+                    litersValue(shownMl),
                     Modifier.alignByBaseline(),
                     fontSize = 104.sp,
                     lineHeight = 104.sp,
@@ -140,10 +142,10 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
                     color = accent,
                 )
                 Spacer(Modifier.width(6.dp))
-                Text("ml", Modifier.alignByBaseline(), fontSize = 32.sp, fontWeight = FontWeight.SemiBold, color = accent)
+                Text("L", Modifier.alignByBaseline(), fontSize = 32.sp, fontWeight = FontWeight.SemiBold, color = accent)
             }
             Text(
-                "of ${d.settings.goalMl} ml daily goal",
+                "of ${liters(d.settings.goalMl)} daily goal",
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Medium,
                 color = DrinklyColors.Muted,
@@ -343,8 +345,8 @@ private fun AddDrinkSheet(todayMl: Int, goalMl: Int, lastHourMl: Int, onAdd: (In
 
     // A gentle hint when the amount would be more than the body needs
     val warning = when {
-        lastHourMl + custom > Hydration.MAX_PER_HOUR_ML -> "That's over 1 l within an hour. Better spread it out."
-        todayMl + custom >= goalMl * Hydration.TOO_MUCH_FACTOR -> "That brings you to ${todayMl + custom} ml, well above your goal."
+        lastHourMl + custom > Hydration.MAX_PER_HOUR_ML -> "That's over 1 L within an hour. Better spread it out."
+        todayMl + custom >= goalMl * Hydration.TOO_MUCH_FACTOR -> "That brings you to ${liters(todayMl + custom)}, well above your goal."
         else -> null
     }
 
@@ -387,11 +389,11 @@ private fun AddDrinkSheet(todayMl: Int, goalMl: Int, lastHourMl: Int, onAdd: (In
                         .background(DrinklyColors.Sky)
                         .border(1.dp, DrinklyColors.Water, shape)
                         .padding(vertical = 14.dp)
-                        .clearAndSetSemantics { contentDescription = "Add $name, $ml ml" },
+                        .clearAndSetSemantics { contentDescription = "Add $name, ${liters(ml)}" },
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Icon(Icons.Rounded.LocalDrink, contentDescription = null, tint = DrinklyColors.Blue)
-                    Text("$ml ml", fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
+                    Text(liters(ml), fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
                     Text(name, fontSize = 12.sp, color = DrinklyColors.Muted)
                 }
             }
@@ -400,18 +402,18 @@ private fun AddDrinkSheet(todayMl: Int, goalMl: Int, lastHourMl: Int, onAdd: (In
         Spacer(Modifier.height(24.dp))
         Row(verticalAlignment = Alignment.Bottom) {
             Text("Other amount", Modifier.weight(1f), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
-            Text("$custom ml", fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Blue)
+            Text(liters(custom), fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Blue)
         }
         Slider(
             value = amount,
             onValueChange = { amount = it },
             valueRange = 50f..1000f,
             steps = 18, // 50 ml steps
-            modifier = Modifier.semantics { contentDescription = "Amount, $custom ml" },
+            modifier = Modifier.semantics { contentDescription = "Amount, ${liters(custom)}" },
         )
         Row {
-            Text("50", Modifier.weight(1f), fontSize = 12.sp, color = DrinklyColors.Muted)
-            Text("1000", fontSize = 12.sp, color = DrinklyColors.Muted)
+            Text(liters(50), Modifier.weight(1f), fontSize = 12.sp, color = DrinklyColors.Muted)
+            Text(liters(1000), fontSize = 12.sp, color = DrinklyColors.Muted)
         }
 
         AnimatedVisibility(warning != null) {
@@ -437,7 +439,7 @@ private fun AddDrinkSheet(todayMl: Int, goalMl: Int, lastHourMl: Int, onAdd: (In
             interactionSource = source,
             modifier = Modifier.pressScale(source).fillMaxWidth().height(54.dp),
         ) {
-            Text("Add $custom ml", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
+            Text("Add ${liters(custom)}", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
         }
     }
 }
