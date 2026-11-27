@@ -25,11 +25,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.BarChart
-import androidx.compose.material.icons.rounded.NotificationsActive
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -63,15 +58,16 @@ import at.drinkly.app.ui.screens.RemindersScreen
 import at.drinkly.app.ui.screens.TodayScreen
 import at.drinkly.app.ui.components.pressScale
 import at.drinkly.app.ui.theme.DrinklyColors
+import at.drinkly.app.ui.theme.DrinklyIcons
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 enum class Tab(val label: String, val icon: ImageVector) {
-    TODAY("Today", Icons.Rounded.WaterDrop),
-    ACTIVITY("Activity", Icons.Rounded.BarChart),
-    REMINDERS("Reminders", Icons.Rounded.NotificationsActive),
-    PROFILE("Profile", Icons.Rounded.Person),
+    TODAY("Today", DrinklyIcons.Droplet),
+    ACTIVITY("Activity", DrinklyIcons.ChartColumn),
+    REMINDERS("Reminders", DrinklyIcons.Bell),
+    PROFILE("Profile", DrinklyIcons.User),
 }
 
 @Composable
@@ -151,7 +147,7 @@ private fun Toast(message: String) {
             .padding(horizontal = 16.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.Rounded.WaterDrop, contentDescription = null, tint = DrinklyColors.Blue, modifier = Modifier.size(18.dp))
+        Icon(DrinklyIcons.Droplet, contentDescription = null, tint = DrinklyColors.Blue, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(8.dp))
         Text(message, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
     }
@@ -171,7 +167,7 @@ private fun AddedNotice(drink: AddedDrink, onUndo: () -> Unit) {
             .semantics { liveRegion = LiveRegionMode.Polite },
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.Rounded.WaterDrop, contentDescription = null, tint = DrinklyColors.Blue, modifier = Modifier.size(15.dp))
+        Icon(DrinklyIcons.Droplet, contentDescription = null, tint = DrinklyColors.Blue, modifier = Modifier.size(15.dp))
         Spacer(Modifier.width(6.dp))
         Text(
             if (drink.fromBottle) "Synced $amount" else "Added $amount",

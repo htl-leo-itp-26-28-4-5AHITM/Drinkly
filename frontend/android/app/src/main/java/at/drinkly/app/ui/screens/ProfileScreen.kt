@@ -21,10 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
@@ -65,6 +61,7 @@ import at.drinkly.app.ui.Dashboard
 import at.drinkly.app.ui.components.BottleIllustration
 import at.drinkly.app.ui.components.SectionCard
 import at.drinkly.app.ui.theme.DrinklyColors
+import at.drinkly.app.ui.theme.DrinklyIcons
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -120,14 +117,14 @@ fun ProfileScreen(
                 Text("Body weight", Modifier.weight(1f), color = DrinklyColors.Ink)
                 FilledTonalIconButton(
                     onClick = { onUpdate { it.copy(weightKg = (it.weightKg - 1).coerceAtLeast(30)) } },
-                ) { Icon(Icons.Rounded.Remove, contentDescription = "Less weight") }
+                ) { Icon(DrinklyIcons.Minus, contentDescription = "Less weight") }
                 Text(
                     "${s.weightKg} kg", Modifier.width(72.dp), textAlign = TextAlign.Center,
                     fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink,
                 )
                 FilledTonalIconButton(
                     onClick = { onUpdate { it.copy(weightKg = (it.weightKg + 1).coerceAtMost(200)) } },
-                ) { Icon(Icons.Rounded.Add, contentDescription = "More weight") }
+                ) { Icon(DrinklyIcons.Plus, contentDescription = "More weight") }
             }
             val suggested = Hydration.suggestedGoal(s.weightKg)
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -279,7 +276,7 @@ private fun CommitTextField(
         trailingIcon = {
             if (changed) {
                 IconButton(onClick = { onCommit(text.trim()) }) {
-                    Icon(Icons.Rounded.Check, contentDescription = "Save", tint = DrinklyColors.Blue)
+                    Icon(DrinklyIcons.Check, contentDescription = "Save", tint = DrinklyColors.Blue)
                 }
             }
         },

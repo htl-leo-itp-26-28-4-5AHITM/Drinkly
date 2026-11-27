@@ -22,11 +22,6 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material.icons.rounded.DeleteOutline
-import androidx.compose.material.icons.rounded.LocalDrink
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -61,6 +56,7 @@ import at.drinkly.app.data.DrinkEntry
 import at.drinkly.app.ui.Dashboard
 import at.drinkly.app.ui.components.SectionCard
 import at.drinkly.app.ui.theme.DrinklyColors
+import at.drinkly.app.ui.theme.DrinklyIcons
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle as DateTextStyle
@@ -179,7 +175,7 @@ private fun CalendarCard(d: Dashboard, month: YearMonth, onMonth: (YearMonth) ->
     SectionCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { onMonth(month.minusMonths(1)) }) {
-                Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = "Previous month", tint = DrinklyColors.Blue)
+                Icon(DrinklyIcons.ChevronLeft, contentDescription = "Previous month", tint = DrinklyColors.Blue)
             }
             Text(
                 month.format(DateTimeFormatter.ofPattern("MMMM yyyy")),
@@ -190,7 +186,7 @@ private fun CalendarCard(d: Dashboard, month: YearMonth, onMonth: (YearMonth) ->
                 color = DrinklyColors.Ink,
             )
             IconButton(onClick = { onMonth(month.plusMonths(1)) }, enabled = month < YearMonth.from(d.today)) {
-                Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = "Next month")
+                Icon(DrinklyIcons.ChevronRight, contentDescription = "Next month")
             }
         }
         Row(Modifier.padding(vertical = 6.dp)) {
@@ -352,7 +348,7 @@ private val timeFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT
 private fun DrinkRow(entry: DrinkEntry, onDelete: (DrinkEntry) -> Unit) {
     Row(Modifier.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Icon(
-            Icons.Rounded.LocalDrink, contentDescription = null, tint = DrinklyColors.Blue,
+            DrinklyIcons.GlassWater, contentDescription = null, tint = DrinklyColors.Blue,
             modifier = Modifier
                 .size(38.dp)
                 .clip(CircleShape)
@@ -368,7 +364,7 @@ private fun DrinkRow(entry: DrinkEntry, onDelete: (DrinkEntry) -> Unit) {
             )
         }
         IconButton(onClick = { onDelete(entry) }) {
-            Icon(Icons.Rounded.DeleteOutline, contentDescription = "Remove ${liters(entry.milliliters)}", tint = DrinklyColors.Muted)
+            Icon(DrinklyIcons.Trash, contentDescription = "Remove ${liters(entry.milliliters)}", tint = DrinklyColors.Muted)
         }
     }
 }

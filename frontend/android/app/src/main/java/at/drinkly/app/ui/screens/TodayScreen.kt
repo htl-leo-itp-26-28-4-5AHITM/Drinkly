@@ -30,17 +30,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.WaterDrop
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Cloud
-import androidx.compose.material.icons.rounded.LocalDrink
-import androidx.compose.material.icons.rounded.LocalFireDepartment
-import androidx.compose.material.icons.rounded.PanTool
-import androidx.compose.material.icons.rounded.Verified
-import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -86,6 +75,7 @@ import at.drinkly.app.ui.components.HydrationScene
 import at.drinkly.app.ui.components.pressScale
 import at.drinkly.app.ui.components.pressable
 import at.drinkly.app.ui.theme.DrinklyColors
+import at.drinkly.app.ui.theme.DrinklyIcons
 import at.drinkly.app.ui.theme.accent
 import at.drinkly.app.ui.theme.water
 import java.time.Duration
@@ -165,7 +155,7 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
                     .shadow(10.dp, RoundedCornerShape(50), spotColor = DrinklyColors.Blue.copy(alpha = 0.5f)),
                 contentPadding = PaddingValues(horizontal = 28.dp),
             ) {
-                Icon(Icons.Rounded.Add, contentDescription = null)
+                Icon(DrinklyIcons.Plus, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text("Add a drink", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
             }
@@ -191,10 +181,10 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
 
 private val HydrationStatus.icon: ImageVector
     get() = when (this) {
-        HydrationStatus.BEHIND -> Icons.Outlined.WaterDrop
-        HydrationStatus.SLIGHTLY_BEHIND, HydrationStatus.ON_TRACK -> Icons.Rounded.WaterDrop
-        HydrationStatus.GOAL_REACHED -> Icons.Rounded.Verified
-        HydrationStatus.TOO_MUCH -> Icons.Rounded.PanTool
+        HydrationStatus.BEHIND -> DrinklyIcons.GlassWater
+        HydrationStatus.SLIGHTLY_BEHIND, HydrationStatus.ON_TRACK -> DrinklyIcons.Droplet
+        HydrationStatus.GOAL_REACHED -> DrinklyIcons.BadgeCheck
+        HydrationStatus.TOO_MUCH -> DrinklyIcons.Hand
     }
 
 /** What's going on right now plus the streak, in one card. */
@@ -228,7 +218,7 @@ private fun StatusCard(message: HydrationMessage, streak: Int) {
         ) {
             val color = if (streak > 0) DrinklyColors.Blue else DrinklyColors.NoData
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Rounded.LocalFireDepartment, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
+                Icon(DrinklyIcons.Flame, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
                 Text("$streak", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = color)
             }
             Text(if (streak == 1) "day" else "days", fontSize = 12.sp, color = DrinklyColors.Muted)
@@ -286,7 +276,7 @@ private fun ConnectionSheet(d: Dashboard, onBottle: () -> Unit, onRefresh: () ->
 
         val serverOk = d.sync.error == null && d.sync.live
         ConnectionRow(
-            icon = { Icon(Icons.Rounded.Cloud, contentDescription = null, tint = if (serverOk) Color.White else DrinklyColors.Navy) },
+            icon = { Icon(DrinklyIcons.Cloud, contentDescription = null, tint = if (serverOk) Color.White else DrinklyColors.Navy) },
             title = "Drinkly server",
             detail = if (serverOk) "Connected" else "Not connected",
             ok = serverOk,
@@ -318,7 +308,7 @@ private fun ConnectionRow(
                 Text(detail, fontSize = 13.sp, color = DrinklyColors.Muted)
                 if (failed) {
                     Spacer(Modifier.width(4.dp))
-                    Icon(Icons.Rounded.Close, contentDescription = null, tint = DrinklyColors.Red, modifier = Modifier.size(16.dp))
+                    Icon(DrinklyIcons.Close, contentDescription = null, tint = DrinklyColors.Red, modifier = Modifier.size(16.dp))
                 }
             }
         }
@@ -355,7 +345,7 @@ private fun AddDrinkSheet(todayMl: Int, goalMl: Int, lastHourMl: Int, onAdd: (In
             Text("Add a drink", fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
             Box {
                 IconButton(onClick = { showInfo = !showInfo }) {
-                    Icon(Icons.Outlined.Info, contentDescription = "About adding drinks", tint = DrinklyColors.Blue)
+                    Icon(DrinklyIcons.Info, contentDescription = "About adding drinks", tint = DrinklyColors.Blue)
                 }
                 if (showInfo) {
                     Popup(
@@ -392,7 +382,7 @@ private fun AddDrinkSheet(todayMl: Int, goalMl: Int, lastHourMl: Int, onAdd: (In
                         .clearAndSetSemantics { contentDescription = "Add $name, ${liters(ml)}" },
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Icon(Icons.Rounded.LocalDrink, contentDescription = null, tint = DrinklyColors.Blue)
+                    Icon(DrinklyIcons.GlassWater, contentDescription = null, tint = DrinklyColors.Blue)
                     Text(liters(ml), fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
                     Text(name, fontSize = 12.sp, color = DrinklyColors.Muted)
                 }
@@ -426,7 +416,7 @@ private fun AddDrinkSheet(todayMl: Int, goalMl: Int, lastHourMl: Int, onAdd: (In
                     .padding(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(Icons.Rounded.PanTool, contentDescription = null, tint = DrinklyColors.Navy, modifier = Modifier.size(16.dp))
+                Icon(DrinklyIcons.Hand, contentDescription = null, tint = DrinklyColors.Navy, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(8.dp))
                 Text(warning.orEmpty(), fontSize = 13.sp, color = DrinklyColors.Navy)
             }
