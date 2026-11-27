@@ -41,6 +41,7 @@ import androidx.compose.material.icons.rounded.PanTool
 import androidx.compose.material.icons.rounded.Verified
 import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -130,20 +131,18 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
                 Text(
                     litersValue(shownMl),
                     Modifier.alignByBaseline(),
-                    fontSize = 104.sp,
-                    lineHeight = 104.sp,
+                    fontSize = 136.sp,
+                    lineHeight = 136.sp,
                     fontWeight = FontWeight.SemiBold,
-                    letterSpacing = (-4).sp,
+                    letterSpacing = (-6).sp,
                     color = accent,
                 )
                 Spacer(Modifier.width(6.dp))
-                Text("L", Modifier.alignByBaseline(), fontSize = 32.sp, fontWeight = FontWeight.SemiBold, color = accent)
+                Text("L", Modifier.alignByBaseline(), fontSize = 40.sp, fontWeight = FontWeight.SemiBold, color = accent)
             }
-            Spacer(Modifier.height(8.dp))
-            StreakChip(d.streak)
             // The status card is hidden for now; bring it back with StatusCard(d.message, d.streak)
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(24.dp))
             val source = remember { MutableInteractionSource() }
             Button(
                 onClick = { showAddSheet = true },
@@ -151,14 +150,17 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
                 modifier = Modifier
                     .pressScale(source)
                     .size(64.dp)
-                    .shadow(10.dp, CircleShape, spotColor = DrinklyColors.Blue.copy(alpha = 0.5f)),
+                    .shadow(12.dp, CircleShape, ambientColor = DrinklyColors.Navy, spotColor = DrinklyColors.Navy.copy(alpha = 0.35f)),
                 shape = CircleShape,
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = DrinklyColors.Blue),
                 contentPadding = PaddingValues(0.dp),
             ) {
                 Icon(Icons.Rounded.Add, contentDescription = "Add a drink", modifier = Modifier.size(32.dp))
             }
 
             Spacer(Modifier.weight(1f))
+            BigStreak(d.streak)
+            Spacer(Modifier.weight(0.5f))
         }
     }
 
@@ -205,6 +207,22 @@ private fun StatusCard(message: HydrationMessage, streak: Int) {
         Spacer(Modifier.width(12.dp))
         Text(message.title, Modifier.weight(1f), fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
         StreakChip(streak)
+    }
+}
+
+/** The streak in large type, straight on the water. */
+@Composable
+private fun BigStreak(streak: Int) {
+    val color = if (streak > 0) DrinklyColors.Navy else DrinklyColors.Navy.copy(alpha = 0.4f)
+    Column(
+        Modifier.clearAndSetSemantics { contentDescription = "$streak-day streak" },
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Rounded.LocalFireDepartment, contentDescription = null, tint = color, modifier = Modifier.size(48.dp))
+            Text("$streak", fontSize = 72.sp, lineHeight = 72.sp, fontWeight = FontWeight.Bold, color = color)
+        }
+        Text("day streak", fontSize = 17.sp, fontWeight = FontWeight.Medium, color = color)
     }
 }
 
