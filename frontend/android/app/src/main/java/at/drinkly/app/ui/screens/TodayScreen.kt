@@ -1,5 +1,6 @@
 package at.drinkly.app.ui.screens
 
+import android.text.format.DateUtils
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
@@ -66,6 +67,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -89,6 +91,8 @@ import at.drinkly.app.ui.components.pressable
 import at.drinkly.app.ui.theme.DrinklyColors
 import at.drinkly.app.ui.theme.accent
 import at.drinkly.app.ui.theme.water
+import java.time.Duration
+import java.time.Instant
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -109,18 +113,27 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
             modifier = Modifier.fillMaxSize(),
         )
 
-        Row(
+        Column(
             Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .statusBarsPadding()
                 .padding(horizontal = 24.dp)
                 .padding(top = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
         ) {
-            BottlePill(d.bottle, onBottle)
-            Spacer(Modifier.weight(1f))
-            SyncButton(d, onRefresh)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                BottlePill(d.bottle, onBottle)
+                Spacer(Modifier.weight(1f))
+                SyncButton(d, onRefresh)
+            }
+            Spacer(Modifier.height(24.dp))
+            Text(
+                "${greeting(d.now.hour)}, ${d.settings.username}",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = DrinklyColors.Navy,
+                modifier = Modifier.semantics { heading() },
+            )
         }
 
         // Hero: the streak as a small eyebrow above today's amount, a bit above the middle
@@ -148,26 +161,37 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
                 Spacer(Modifier.width(6.dp))
                 Text("L", Modifier.alignByBaseline(), fontSize = 40.sp, fontWeight = FontWeight.SemiBold, color = accent)
             }
+            d.entries.firstOrNull()?.let { last ->
+                Text(lastDrinkText(last.timestamp), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = DrinklyColors.Muted)
+            }
             // The status card is hidden for now; bring it back with StatusCard(d.message, d.streak)
         }
 
-        // The main action, within thumb reach on the water above the bottom bar
-        val source = remember { MutableInteractionSource() }
-        Button(
-            onClick = { showAddSheet = true },
-            interactionSource = source,
-            modifier = Modifier
+        // The main action within thumb reach on the water, flanked by two one-tap amounts
+        Row(
+            Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
-                .padding(bottom = 92.dp + 32.dp)
-                .pressScale(source)
-                .size(72.dp)
-                .shadow(16.dp, CircleShape, ambientColor = DrinklyColors.Navy, spotColor = DrinklyColors.Navy.copy(alpha = 0.35f)),
-            shape = CircleShape,
-            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = DrinklyColors.Blue),
-            contentPadding = PaddingValues(0.dp),
+                .padding(bottom = 92.dp + 32.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            Icon(Icons.Rounded.Add, contentDescription = "Add a drink", modifier = Modifier.size(36.dp))
+            QuickAdd(250, onAdd)
+            val source = remember { MutableInteractionSource() }
+            Button(
+                onClick = { showAddSheet = true },
+                interactionSource = source,
+                modifier = Modifier
+                    .pressScale(source)
+                    .size(72.dp)
+                    .shadow(16.dp, CircleShape, ambientColor = DrinklyColors.Navy, spotColor = DrinklyColors.Navy.copy(alpha = 0.35f)),
+                shape = CircleShape,
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = DrinklyColors.Blue),
+                contentPadding = PaddingValues(0.dp),
+            ) {
+                Icon(Icons.Rounded.Add, contentDescription = "Add a drink", modifier = Modifier.size(36.dp))
+            }
+            QuickAdd(500, onAdd)
         }
     }
 
@@ -215,6 +239,36 @@ private fun StatusCard(message: HydrationMessage, streak: Int) {
         Text(message.title, Modifier.weight(1f), fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
         StreakChip(streak)
     }
+}
+
+/** Adds [ml] with one tap, no sheet; the undo notice covers mistakes. */
+@Composable
+private fun QuickAdd(ml: Int, onAdd: (Int) -> Unit) {
+    val shape = RoundedCornerShape(50)
+    Text(
+        "+${liters(ml)}",
+        Modifier
+            .shadow(8.dp, shape, ambientColor = DrinklyColors.Navy.copy(alpha = 0.3f), spotColor = DrinklyColors.Navy.copy(alpha = 0.3f))
+            .pressable(shape) { onAdd(ml) }
+            .background(Color.White.copy(alpha = 0.9f))
+            .padding(horizontal = 14.dp, vertical = 10.dp)
+            .semantics { contentDescription = "Add ${liters(ml)}" },
+        fontSize = 15.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = DrinklyColors.Navy,
+    )
+}
+
+private fun greeting(hour: Int) = when (hour) {
+    in 5..11 -> "Good morning"
+    in 12..17 -> "Good afternoon"
+    else -> "Good evening"
+}
+
+private fun lastDrinkText(at: Instant): String {
+    if (Duration.between(at, Instant.now()).seconds < 60) return "Last drink just now"
+    val relative = DateUtils.getRelativeTimeSpanString(at.toEpochMilli(), System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS)
+    return "Last drink ${relative.toString().replaceFirstChar { it.lowercase() }}"
 }
 
 /** The streak as a small line above the number: a warm flame while it runs, grey at zero. */
