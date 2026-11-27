@@ -130,9 +130,9 @@ object Hydration {
         val behind = roundUp(expectedMl - todayMl)
         return when (status) {
             HydrationStatus.TOO_MUCH -> if (lastHourMl > MAX_PER_HOUR_ML) {
-                HydrationMessage(status, "Slow down", "${liters(lastHourMl)} in the last hour. Your body can take about 1 L per hour.")
+                HydrationMessage(status, "Slow down", "$lastHourMl ml in the last hour. Your body can take about 1 l per hour.")
             } else {
-                HydrationMessage(status, "That's plenty", "You're ${liters(todayMl - goalMl)} over your goal. No need for more today.")
+                HydrationMessage(status, "That's plenty", "You're ${todayMl - goalMl} ml over your goal. No need for more today.")
             }
             HydrationStatus.GOAL_REACHED -> HydrationMessage(
                 status, "Goal reached",
@@ -141,10 +141,10 @@ object Hydration {
             HydrationStatus.ON_TRACK -> if (todayMl == 0) {
                 HydrationMessage(status, "Let's get started", "A glass of water is a good first step.")
             } else {
-                HydrationMessage(status, "On track", "${liters(goalMl - todayMl)} to go today.")
+                HydrationMessage(status, "On track", "${goalMl - todayMl} ml to go today.")
             }
-            HydrationStatus.SLIGHTLY_BEHIND -> HydrationMessage(status, "A little behind", "Drink about ${liters(behind)} to catch up.")
-            HydrationStatus.BEHIND -> HydrationMessage(status, "Time for a drink", "You're ${liters(behind)} behind your pace.")
+            HydrationStatus.SLIGHTLY_BEHIND -> HydrationMessage(status, "A little behind", "Drink about $behind ml to catch up.")
+            HydrationStatus.BEHIND -> HydrationMessage(status, "Time for a drink", "You're $behind ml behind your pace.")
         }
     }
 

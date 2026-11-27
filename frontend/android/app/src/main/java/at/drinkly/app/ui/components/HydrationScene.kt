@@ -13,7 +13,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
@@ -23,9 +22,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import at.drinkly.app.data.liters
 import at.drinkly.app.ui.theme.DrinklyColors
-import at.drinkly.app.ui.theme.Inter
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.min
@@ -55,7 +52,7 @@ fun HydrationScene(fill: Float, goalMl: Int, water: Color, topInset: Dp, modifie
             zero = size.height + 12.dp.toPx(), // empty water hides below the screen
             top = topInset.toPx() + 80.dp.toPx(),
         )
-        drawRect(Brush.verticalGradient(listOf(Color.White, DrinklyColors.Nebel)))
+        drawRect(Brush.verticalGradient(listOf(Color.White, DrinklyColors.Sky)))
 
         val top = scale.y(min(fill, MAX_SHARE))
         drawPath(wave(top, phase + PI.toFloat() * 0.8f, 8.dp.toPx()), water.copy(alpha = 0.55f))
@@ -82,15 +79,14 @@ private fun DrawScope.wave(top: Float, phase: Float, amplitude: Float) = Path().
     close()
 }
 
-/** Faint ticks every 0.25 L (0.5 L for big goals), labelled every 0.5 L (1 L), with the goal highlighted. */
+/** Faint ticks every 250 ml (500 ml for big goals), labelled every 500 ml (1 l), with the goal highlighted. */
 private fun DrawScope.drawRuler(scale: SceneScale, goalMl: Int, measurer: TextMeasurer) {
-    val x = size.width - 16.dp.toPx()
+    val x = size.width - 12.dp.toPx()
     val step = if (goalMl > 2500) 500 else 250
     val labelEvery = step * 2
     val maxMl = (goalMl * MAX_SHARE).toInt()
-    // Tiefsee stays readable on both the white sky and the Aqua water
-    val color = DrinklyColors.Tiefsee.copy(alpha = 0.35f)
-    val labelStyle = TextStyle(fontFamily = Inter, fontSize = 10.sp, fontWeight = FontWeight.Medium, color = DrinklyColors.Tiefsee.copy(alpha = 0.75f))
+    val color = DrinklyColors.Navy.copy(alpha = 0.28f)
+    val labelStyle = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.Medium, color = DrinklyColors.Muted.copy(alpha = 0.7f))
 
     fun label(text: String, y: Float, gap: Float, style: TextStyle) {
         val layout = measurer.measure(text, style)
@@ -101,14 +97,14 @@ private fun DrawScope.drawRuler(scale: SceneScale, goalMl: Int, measurer: TextMe
     for (ml in step..maxMl step step) {
         val y = scale.y(ml.toFloat() / goalMl)
         val major = ml % labelEvery == 0
-        drawLine(color, Offset(x - (if (major) 16 else 8).dp.toPx(), y), Offset(x, y), strokeWidth = 1.dp.toPx())
-        if (major && abs(ml - goalMl) >= step) label(liters(ml), y, 24.dp.toPx(), labelStyle)
+        drawLine(color, Offset(x - (if (major) 12 else 6).dp.toPx(), y), Offset(x, y), strokeWidth = 1.dp.toPx())
+        if (major && abs(ml - goalMl) >= step) label(liters(ml), y, 16.dp.toPx(), labelStyle)
     }
 
     val goalY = scale.y(1f)
-    drawLine(DrinklyColors.Tiefsee, Offset(x - 24.dp.toPx(), goalY), Offset(x, goalY), strokeWidth = 2.dp.toPx(), cap = StrokeCap.Round)
+    drawLine(DrinklyColors.Blue.copy(alpha = 0.6f), Offset(x - 18.dp.toPx(), goalY), Offset(x, goalY), strokeWidth = 2.dp.toPx())
     label(
-        "Goal ${liters(goalMl)}", goalY, 32.dp.toPx(),
-        labelStyle.copy(fontWeight = FontWeight.SemiBold, color = DrinklyColors.Tiefsee),
+        "Goal ${liters(goalMl)}", goalY, 22.dp.toPx(),
+        labelStyle.copy(fontWeight = FontWeight.SemiBold, color = DrinklyColors.Blue.copy(alpha = 0.8f)),
     )
 }

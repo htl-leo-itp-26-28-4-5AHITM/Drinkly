@@ -3,7 +3,6 @@ package at.drinkly.app.ui
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import at.drinkly.app.data.liters
 import at.drinkly.app.bottle.BottleLink
 import at.drinkly.app.bottle.BottleState
 import at.drinkly.app.bottle.SimulatedBottle
@@ -94,7 +93,7 @@ class DrinklyViewModel(app: Application) : AndroidViewModel(app) {
     val messages: SharedFlow<String> = _messages.asSharedFlow()
 
     private val _added = MutableSharedFlow<AddedDrink>(extraBufferCapacity = 4)
-    /** Freshly saved drinks, for the "Added 0.25 L · Undo" notice. */
+    /** Freshly saved drinks, for the "Added 250 ml · Undo" notice. */
     val added: SharedFlow<AddedDrink> = _added.asSharedFlow()
 
     private val profile = combine(store.settings, store.goalHistory, store.firstActive, ::Profile)
@@ -163,7 +162,7 @@ class DrinklyViewModel(app: Application) : AndroidViewModel(app) {
             try {
                 api.delete(entry.id)
                 load()
-                _messages.tryEmit("Removed ${liters(entry.milliliters)}")
+                _messages.tryEmit("Removed ${entry.milliliters} ml")
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

@@ -27,27 +27,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import at.drinkly.app.ui.theme.DrinklyColors
-import at.drinkly.app.ui.theme.DrinklyType
+import java.text.DecimalFormat
 
 @Composable
 fun SectionCard(title: String? = null, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     Column(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(22.dp))
             .background(DrinklyColors.Card)
-            .padding(16.dp),
+            .padding(18.dp),
     ) {
         if (title != null) {
-            // Eyebrow label like the chapter marks in the corporate design manual
-            Text(
-                title.uppercase(),
-                style = DrinklyType.Caption,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 1.sp,
-                color = DrinklyColors.AquaInk,
-            )
-            Spacer(Modifier.height(8.dp))
+            Text(title, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Muted)
+            Spacer(Modifier.height(10.dp))
         }
         content()
     }
@@ -72,3 +65,8 @@ fun Modifier.pressable(shape: Shape, role: Role = Role.Button, onClick: () -> Un
         .clip(shape)
         .clickable(interactionSource = source, indication = ripple(), role = role, onClick = onClick)
 }
+
+private val litersFormat = DecimalFormat("0.##")
+
+/** 1500 -> "1.5 l" */
+fun liters(ml: Int): String = litersFormat.format(ml / 1000.0) + " l"

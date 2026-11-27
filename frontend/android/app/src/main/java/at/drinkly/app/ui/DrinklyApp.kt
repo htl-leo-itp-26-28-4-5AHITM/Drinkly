@@ -25,6 +25,11 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.BarChart
+import androidx.compose.material.icons.rounded.NotificationsActive
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -49,25 +54,23 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import at.drinkly.app.data.liters
 import at.drinkly.app.ui.screens.ActivityScreen
 import at.drinkly.app.ui.screens.ProfileScreen
 import at.drinkly.app.ui.screens.RemindersScreen
 import at.drinkly.app.ui.screens.TodayScreen
 import at.drinkly.app.ui.components.pressScale
 import at.drinkly.app.ui.theme.DrinklyColors
-import at.drinkly.app.ui.theme.DrinklyIcons
-import at.drinkly.app.ui.theme.DrinklyType
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 enum class Tab(val label: String, val icon: ImageVector) {
-    TODAY("Today", DrinklyIcons.Droplet),
-    ACTIVITY("Activity", DrinklyIcons.ChartColumn),
-    REMINDERS("Reminders", DrinklyIcons.Bell),
-    PROFILE("Profile", DrinklyIcons.User),
+    TODAY("Today", Icons.Rounded.WaterDrop),
+    ACTIVITY("Activity", Icons.Rounded.BarChart),
+    REMINDERS("Reminders", Icons.Rounded.NotificationsActive),
+    PROFILE("Profile", Icons.Rounded.Person),
 }
 
 @Composable
@@ -93,7 +96,7 @@ fun DrinklyApp(vm: DrinklyViewModel) {
         }
     }
 
-    Box(Modifier.fillMaxSize().background(DrinklyColors.Nebel)) {
+    Box(Modifier.fillMaxSize().background(DrinklyColors.Sky)) {
         Crossfade(targetState = tab, label = "tab") { current ->
             when (current) {
                 Tab.TODAY -> TodayScreen(dashboard, onAdd = vm::addDrink, onRefresh = vm::refresh, onBottle = vm::toggleBottle)
@@ -129,27 +132,27 @@ fun DrinklyApp(vm: DrinklyViewModel) {
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = 20.dp, vertical = 12.dp),
         )
     }
 }
 
-/** Short confirmation like "Removed 0.25 L". */
+/** Short confirmation like "Added 250 ml". */
 @Composable
 private fun Toast(message: String) {
     val shape = RoundedCornerShape(50)
     Row(
         Modifier
-            .shadow(16.dp, shape, ambientColor = DrinklyColors.Tiefsee, spotColor = DrinklyColors.Tiefsee.copy(alpha = 0.25f))
+            .shadow(12.dp, shape, ambientColor = DrinklyColors.Navy, spotColor = DrinklyColors.Navy.copy(alpha = 0.25f))
             .clip(shape)
             .background(Color.White)
-            .border(1.dp, DrinklyColors.Line, shape)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .border(1.dp, DrinklyColors.Water, shape)
+            .padding(horizontal = 16.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(DrinklyIcons.Droplet, contentDescription = null, tint = DrinklyColors.Tiefsee, modifier = Modifier.size(16.dp))
+        Icon(Icons.Rounded.WaterDrop, contentDescription = null, tint = DrinklyColors.Blue, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(8.dp))
-        Text(message, style = DrinklyType.Small, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
+        Text(message, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
     }
 }
 
@@ -157,21 +160,21 @@ private fun Toast(message: String) {
 @Composable
 private fun AddedNotice(drink: AddedDrink, onUndo: () -> Unit) {
     val shape = RoundedCornerShape(50)
-    val amount = liters(drink.entry.milliliters)
+    val ml = drink.entry.milliliters
     Row(
         Modifier
-            .shadow(8.dp, shape, ambientColor = DrinklyColors.Tiefsee.copy(alpha = 0.15f), spotColor = DrinklyColors.Tiefsee.copy(alpha = 0.15f))
+            .shadow(8.dp, shape, ambientColor = DrinklyColors.Navy.copy(alpha = 0.15f), spotColor = DrinklyColors.Navy.copy(alpha = 0.15f))
             .clip(shape)
             .background(Color.White.copy(alpha = 0.96f))
-            .padding(start = 16.dp)
+            .padding(start = 14.dp, end = 2.dp)
             .semantics { liveRegion = LiveRegionMode.Polite },
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(DrinklyIcons.Droplet, contentDescription = null, tint = DrinklyColors.Tiefsee, modifier = Modifier.size(16.dp))
-        Spacer(Modifier.width(8.dp))
+        Icon(Icons.Rounded.WaterDrop, contentDescription = null, tint = DrinklyColors.Blue, modifier = Modifier.size(15.dp))
+        Spacer(Modifier.width(6.dp))
         Text(
-            if (drink.fromBottle) "Synced $amount" else "Added $amount",
-            style = DrinklyType.Small, fontWeight = FontWeight.Medium, color = DrinklyColors.Ink,
+            if (drink.fromBottle) "Synced $ml ml" else "Added $ml ml",
+            fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DrinklyColors.Ink,
         )
         val source = remember { MutableInteractionSource() }
         val pressed by source.collectIsPressedAsState()
@@ -179,10 +182,10 @@ private fun AddedNotice(drink: AddedDrink, onUndo: () -> Unit) {
             "Undo",
             Modifier
                 .clickable(interactionSource = source, indication = null, role = Role.Button, onClick = onUndo)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            style = DrinklyType.Small,
+                .padding(horizontal = 12.dp, vertical = 11.dp),
+            fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
-            color = DrinklyColors.AquaInk.copy(alpha = if (pressed) 0.5f else 1f),
+            color = DrinklyColors.Blue.copy(alpha = if (pressed) 0.5f else 1f),
         )
     }
 }
@@ -193,30 +196,30 @@ private fun BottomBar(selected: Tab, onSelect: (Tab) -> Unit, modifier: Modifier
     Row(
         modifier
             .fillMaxWidth()
-            .shadow(16.dp, shape, ambientColor = DrinklyColors.Tiefsee, spotColor = DrinklyColors.Tiefsee.copy(alpha = 0.3f))
+            .shadow(16.dp, shape, ambientColor = DrinklyColors.Navy, spotColor = DrinklyColors.Navy.copy(alpha = 0.3f))
             .clip(shape)
             .background(Color.White)
-            .padding(8.dp)
+            .padding(6.dp)
             .selectableGroup(),
     ) {
         Tab.entries.forEach { tab ->
             val isSelected = tab == selected
-            val color = if (isSelected) DrinklyColors.Tiefsee else DrinklyColors.Muted
+            val color = if (isSelected) DrinklyColors.Blue else DrinklyColors.Muted
             val source = remember { MutableInteractionSource() }
             Column(
                 Modifier
                     .weight(1f)
                     .pressScale(source)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(if (isSelected) DrinklyColors.Nebel else Color.Transparent)
+                    .clip(RoundedCornerShape(26.dp))
+                    .background(if (isSelected) DrinklyColors.Sky else Color.Transparent)
                     .selectable(isSelected, interactionSource = source, indication = ripple(), role = Role.Tab, onClick = { onSelect(tab) })
                     .padding(vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Icon(tab.icon, contentDescription = null, tint = color, modifier = Modifier.size(24.dp))
                 Text(
-                    tab.label, style = DrinklyType.Caption, color = color,
-                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                    tab.label, fontSize = 11.sp, color = color,
+                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                 )
             }
         }

@@ -26,6 +26,14 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Balance
+import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.NotificationsOff
+import androidx.compose.material.icons.rounded.Remove
+import androidx.compose.material.icons.rounded.SelfImprovement
+import androidx.compose.material.icons.rounded.WbTwilight
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
@@ -54,8 +62,6 @@ import at.drinkly.app.ui.components.pressScale
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import at.drinkly.app.ui.theme.DrinklyColors
-import at.drinkly.app.ui.theme.DrinklyIcons
-import at.drinkly.app.ui.theme.DrinklyType
 
 @Composable
 fun RemindersScreen(d: Dashboard, onUpdate: ((AppSettings) -> AppSettings) -> Unit, onTest: () -> Unit) {
@@ -77,11 +83,11 @@ fun RemindersScreen(d: Dashboard, onUpdate: ((AppSettings) -> AppSettings) -> Un
             .verticalScroll(rememberScrollState())
             .statusBarsPadding()
             .navigationBarsPadding()
-            .padding(horizontal = 16.dp)
-            .padding(top = 16.dp, bottom = 112.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(horizontal = 20.dp)
+            .padding(top = 16.dp, bottom = 110.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             ReminderPlan.entries.forEach { plan ->
                 PlanCard(plan, selected = plan == s.reminderPlan) {
                     if (plan != ReminderPlan.OFF) ensurePermission()
@@ -93,10 +99,10 @@ fun RemindersScreen(d: Dashboard, onUpdate: ((AppSettings) -> AppSettings) -> Un
         SectionCard("Active hours") {
             HourStepper("From", s.wakeHour, 4..(s.sleepHour - 1)) { h -> onUpdate { it.copy(wakeHour = h) } }
             HourStepper("Until", s.sleepHour, (s.wakeHour + 1)..24) { h -> onUpdate { it.copy(sleepHour = h) } }
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(6.dp))
             Text(
                 "Reminders only arrive in this window, and your daily goal is spread across it.",
-                style = DrinklyType.Small, color = DrinklyColors.Muted,
+                fontSize = 13.sp, color = DrinklyColors.Muted,
             )
         }
 
@@ -113,20 +119,20 @@ fun RemindersScreen(d: Dashboard, onUpdate: ((AppSettings) -> AppSettings) -> Un
                     Text("Start when I get up", fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
                     Text(
                         "Your day begins the first time you use Drinkly or your bottle in the morning, so the pace fits your real day.",
-                        style = DrinklyType.Small, color = DrinklyColors.Muted,
+                        fontSize = 13.sp, color = DrinklyColors.Muted,
                     )
                 }
-                Spacer(Modifier.width(16.dp))
+                Spacer(Modifier.width(12.dp))
                 Switch(checked = s.startOnWakeUp, onCheckedChange = null)
             }
             if (s.startOnWakeUp) {
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(10.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(DrinklyIcons.Sunrise, contentDescription = null, tint = DrinklyColors.Tiefsee, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(8.dp))
+                    Icon(Icons.Rounded.WbTwilight, contentDescription = null, tint = DrinklyColors.Blue, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
                     Text(
                         "Today started at ${d.dayStart.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))}",
-                        style = DrinklyType.Small, fontWeight = FontWeight.SemiBold, color = DrinklyColors.AquaInk,
+                        fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Blue,
                     )
                 }
             }
@@ -143,7 +149,7 @@ fun RemindersScreen(d: Dashboard, onUpdate: ((AppSettings) -> AppSettings) -> Un
             ) {
                 Column(Modifier.weight(1f)) {
                     Text("Only when I'm behind", fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
-                    Text("Skip reminders while you're on track", style = DrinklyType.Small, color = DrinklyColors.Muted)
+                    Text("Skip reminders while you're on track", fontSize = 13.sp, color = DrinklyColors.Muted)
                 }
                 Switch(checked = s.onlyWhenBehind, onCheckedChange = null)
             }
@@ -163,40 +169,40 @@ fun RemindersScreen(d: Dashboard, onUpdate: ((AppSettings) -> AppSettings) -> Un
 
 private val ReminderPlan.icon
     get() = when (this) {
-        ReminderPlan.OFF -> DrinklyIcons.BellOff
-        ReminderPlan.RELAXED -> DrinklyIcons.Leaf
-        ReminderPlan.BALANCED -> DrinklyIcons.Scale
-        ReminderPlan.STEADY -> DrinklyIcons.Zap
+        ReminderPlan.OFF -> Icons.Rounded.NotificationsOff
+        ReminderPlan.RELAXED -> Icons.Rounded.SelfImprovement
+        ReminderPlan.BALANCED -> Icons.Rounded.Balance
+        ReminderPlan.STEADY -> Icons.Rounded.Bolt
     }
 
 @Composable
 private fun PlanCard(plan: ReminderPlan, selected: Boolean, onClick: () -> Unit) {
     val source = remember { MutableInteractionSource() }
-    val shape = RoundedCornerShape(24.dp)
+    val shape = RoundedCornerShape(22.dp)
     Row(
         Modifier
             .fillMaxWidth()
             .pressScale(source)
             .clip(shape)
             .background(Color.White)
-            .border(2.dp, if (selected) DrinklyColors.Tiefsee else Color.Transparent, shape)
+            .border(2.dp, if (selected) DrinklyColors.Blue else Color.Transparent, shape)
             .selectable(selected, interactionSource = source, indication = ripple(), role = Role.RadioButton, onClick = onClick)
-            .padding(16.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             plan.icon, contentDescription = null,
-            tint = if (selected) Color.White else DrinklyColors.Tiefsee,
+            tint = if (selected) Color.White else DrinklyColors.Blue,
             modifier = Modifier
-                .size(40.dp)
+                .size(42.dp)
                 .clip(CircleShape)
-                .background(if (selected) DrinklyColors.Tiefsee else DrinklyColors.Nebel)
-                .padding(8.dp),
+                .background(if (selected) DrinklyColors.Blue else DrinklyColors.Sky)
+                .padding(10.dp),
         )
-        Spacer(Modifier.width(16.dp))
+        Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(plan.title, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
-            Text(plan.description, style = DrinklyType.Small, color = DrinklyColors.Muted)
+            Text(plan.description, fontSize = 13.sp, color = DrinklyColors.Muted)
         }
         RadioButton(selected = selected, onClick = null)
     }
@@ -207,18 +213,18 @@ private fun HourStepper(label: String, hour: Int, allowed: IntRange, onChange: (
     Row(Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(label, Modifier.weight(1f), color = DrinklyColors.Ink)
         FilledTonalIconButton(onClick = { onChange(hour - 1) }, enabled = hour - 1 in allowed) {
-            Icon(DrinklyIcons.Minus, contentDescription = "One hour earlier")
+            Icon(Icons.Rounded.Remove, contentDescription = "One hour earlier")
         }
         Text(
             "%02d:00".format(hour),
-            Modifier.width(88.dp),
-            style = DrinklyType.H2,
-            fontWeight = FontWeight.ExtraBold,
-            color = DrinklyColors.Tiefsee,
+            Modifier.width(64.dp),
+            fontSize = 17.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = DrinklyColors.Ink,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         )
         FilledTonalIconButton(onClick = { onChange(hour + 1) }, enabled = hour + 1 in allowed) {
-            Icon(DrinklyIcons.Plus, contentDescription = "One hour later")
+            Icon(Icons.Rounded.Add, contentDescription = "One hour later")
         }
     }
 }

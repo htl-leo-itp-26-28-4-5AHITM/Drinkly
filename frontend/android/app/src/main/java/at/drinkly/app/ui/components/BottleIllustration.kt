@@ -22,7 +22,7 @@ fun BottleIllustration(modifier: Modifier = Modifier, dimmed: Boolean = false) {
 
         // cap with a small loop handle
         drawRoundRect(
-            color = Color(0xFF082C45).copy(alpha = alpha),
+            color = Color(0xFF1E355C).copy(alpha = alpha),
             topLeft = Offset((w - capW) / 2, 0f),
             size = Size(capW, capH),
             cornerRadius = CornerRadius(w * 0.12f),
@@ -30,7 +30,7 @@ fun BottleIllustration(modifier: Modifier = Modifier, dimmed: Boolean = false) {
         // body
         drawRoundRect(
             brush = Brush.horizontalGradient(
-                listOf(Color(0xFF1A5680), DrinklyColors.Tiefsee, Color(0xFF082C45)),
+                listOf(Color(0xFF3B5D93), DrinklyColors.Navy, Color(0xFF203A63)),
             ),
             topLeft = Offset(0f, capH * 0.9f),
             size = Size(w, h - capH * 0.9f),
@@ -44,11 +44,11 @@ fun BottleIllustration(modifier: Modifier = Modifier, dimmed: Boolean = false) {
             size = Size(w * 0.12f, h * 0.62f),
             cornerRadius = CornerRadius(w * 0.06f),
         )
-        // LED ring at the lid, Aqua like in the corporate design
+        // sensor ring
         drawRect(
-            color = DrinklyColors.Aqua.copy(alpha = alpha),
-            topLeft = Offset(0f, capH * 0.9f),
-            size = Size(w, h * 0.04f),
+            color = Color(0xFF8EC3EC).copy(alpha = 0.7f * alpha),
+            topLeft = Offset(0f, h * 0.78f),
+            size = Size(w, h * 0.025f),
         )
     }
 }
