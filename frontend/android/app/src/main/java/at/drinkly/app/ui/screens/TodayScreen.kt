@@ -167,31 +167,23 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
             // The status card is hidden for now; bring it back with StatusCard(d.message, d.streak)
         }
 
-        // The main action within thumb reach on the water, flanked by two one-tap amounts
-        Row(
-            Modifier
+        // The main action, within thumb reach on the water above the bottom bar
+        val source = remember { MutableInteractionSource() }
+        Button(
+            onClick = { showAddSheet = true },
+            interactionSource = source,
+            modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
-                .padding(bottom = 92.dp + 32.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
+                .padding(bottom = 92.dp + 32.dp)
+                .pressScale(source)
+                .size(72.dp)
+                .shadow(16.dp, CircleShape, ambientColor = DrinklyColors.Navy, spotColor = DrinklyColors.Navy.copy(alpha = 0.35f)),
+            shape = CircleShape,
+            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = DrinklyColors.Blue),
+            contentPadding = PaddingValues(0.dp),
         ) {
-            QuickAdd(250, onAdd)
-            val source = remember { MutableInteractionSource() }
-            Button(
-                onClick = { showAddSheet = true },
-                interactionSource = source,
-                modifier = Modifier
-                    .pressScale(source)
-                    .size(72.dp)
-                    .shadow(16.dp, CircleShape, ambientColor = DrinklyColors.Navy, spotColor = DrinklyColors.Navy.copy(alpha = 0.35f)),
-                shape = CircleShape,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = DrinklyColors.Blue),
-                contentPadding = PaddingValues(0.dp),
-            ) {
-                Icon(Icons.Rounded.Add, contentDescription = "Add a drink", modifier = Modifier.size(36.dp))
-            }
-            QuickAdd(500, onAdd)
+            Icon(Icons.Rounded.Add, contentDescription = "Add a drink", modifier = Modifier.size(36.dp))
         }
     }
 
@@ -239,24 +231,6 @@ private fun StatusCard(message: HydrationMessage, streak: Int) {
         Text(message.title, Modifier.weight(1f), fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
         StreakChip(streak)
     }
-}
-
-/** Adds [ml] with one tap, no sheet; the undo notice covers mistakes. */
-@Composable
-private fun QuickAdd(ml: Int, onAdd: (Int) -> Unit) {
-    val shape = RoundedCornerShape(50)
-    Text(
-        "+${liters(ml)}",
-        Modifier
-            .shadow(8.dp, shape, ambientColor = DrinklyColors.Navy.copy(alpha = 0.3f), spotColor = DrinklyColors.Navy.copy(alpha = 0.3f))
-            .pressable(shape) { onAdd(ml) }
-            .background(Color.White.copy(alpha = 0.9f))
-            .padding(horizontal = 14.dp, vertical = 10.dp)
-            .semantics { contentDescription = "Add ${liters(ml)}" },
-        fontSize = 15.sp,
-        fontWeight = FontWeight.SemiBold,
-        color = DrinklyColors.Navy,
-    )
 }
 
 private fun greeting(hour: Int) = when (hour) {
