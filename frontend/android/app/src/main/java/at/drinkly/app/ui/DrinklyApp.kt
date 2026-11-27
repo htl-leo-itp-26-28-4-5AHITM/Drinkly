@@ -1,8 +1,15 @@
 package at.drinkly.app.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
@@ -14,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,7 +48,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,6 +62,8 @@ import at.drinkly.app.ui.screens.RemindersScreen
 import at.drinkly.app.ui.screens.TodayScreen
 import at.drinkly.app.ui.components.pressScale
 import at.drinkly.app.ui.theme.DrinklyColors
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 enum class Tab(val label: String, val icon: ImageVector) {
@@ -65,11 +78,21 @@ fun DrinklyApp(vm: DrinklyViewModel) {
     val dashboard by vm.dashboard.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableStateOf(Tab.TODAY) }
     val snackbar = remember { SnackbarHostState() }
+    var added by remember { mutableStateOf<AddedDrink?>(null) }
+    var addedVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(vm) {
         vm.messages.collect { message ->
             snackbar.currentSnackbarData?.dismiss()
             launch { snackbar.showSnackbar(message) }
+        }
+    }
+    LaunchedEffect(vm) {
+        vm.added.collectLatest {
+            added = it
+            addedVisible = true
+            delay(4000)
+            addedVisible = false
         }
     }
 
@@ -91,6 +114,19 @@ fun DrinklyApp(vm: DrinklyViewModel) {
             snackbar,
             Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 92.dp),
         ) { data -> Toast(data.visuals.message) }
+        AnimatedVisibility(
+            addedVisible,
+            Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 8.dp),
+            enter = slideInVertically { -it * 2 } + fadeIn(),
+            exit = slideOutVertically { -it * 2 } + fadeOut(),
+        ) {
+            added?.let { drink ->
+                AddedNotice(drink, onUndo = {
+                    addedVisible = false
+                    vm.undoDrink(drink.entry)
+                })
+            }
+        }
         BottomBar(
             tab, onSelect = { tab = it },
             modifier = Modifier
@@ -117,6 +153,40 @@ private fun Toast(message: String) {
         Icon(Icons.Rounded.WaterDrop, contentDescription = null, tint = DrinklyColors.Blue, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(8.dp))
         Text(message, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
+    }
+}
+
+/** Small pill from the top after a drink was saved, with a plain-text "Undo". */
+@Composable
+private fun AddedNotice(drink: AddedDrink, onUndo: () -> Unit) {
+    val shape = RoundedCornerShape(50)
+    val ml = drink.entry.milliliters
+    Row(
+        Modifier
+            .shadow(8.dp, shape, ambientColor = DrinklyColors.Navy.copy(alpha = 0.15f), spotColor = DrinklyColors.Navy.copy(alpha = 0.15f))
+            .clip(shape)
+            .background(Color.White.copy(alpha = 0.96f))
+            .padding(start = 14.dp, end = 2.dp)
+            .semantics { liveRegion = LiveRegionMode.Polite },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Rounded.WaterDrop, contentDescription = null, tint = DrinklyColors.Blue, modifier = Modifier.size(15.dp))
+        Spacer(Modifier.width(6.dp))
+        Text(
+            if (drink.fromBottle) "Synced $ml ml" else "Added $ml ml",
+            fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DrinklyColors.Ink,
+        )
+        val source = remember { MutableInteractionSource() }
+        val pressed by source.collectIsPressedAsState()
+        Text(
+            "Undo",
+            Modifier
+                .clickable(interactionSource = source, indication = null, role = Role.Button, onClick = onUndo)
+                .padding(horizontal = 12.dp, vertical = 11.dp),
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = DrinklyColors.Blue.copy(alpha = if (pressed) 0.5f else 1f),
+        )
     }
 }
 

@@ -68,6 +68,9 @@ data class Dashboard(
     fun goalOn(day: LocalDate): Int = Hydration.goalOn(day, goalHistory, settings.goalMl)
 }
 
+/** A drink that was just saved, by hand or measured by the bottle. */
+data class AddedDrink(val entry: DrinkEntry, val fromBottle: Boolean)
+
 /** Settings plus the goal history and when today started. */
 private data class Profile(val settings: AppSettings, val goalHistory: List<GoalChange>, val firstActive: LocalDateTime?)
 
@@ -88,6 +91,10 @@ class DrinklyViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _messages = MutableSharedFlow<String>(extraBufferCapacity = 4)
     val messages: SharedFlow<String> = _messages.asSharedFlow()
+
+    private val _added = MutableSharedFlow<AddedDrink>(extraBufferCapacity = 4)
+    /** Freshly saved drinks, for the "Added 250 ml · Undo" notice. */
+    val added: SharedFlow<AddedDrink> = _added.asSharedFlow()
 
     private val profile = combine(store.settings, store.goalHistory, store.firstActive, ::Profile)
 
@@ -139,9 +146,9 @@ class DrinklyViewModel(app: Application) : AndroidViewModel(app) {
     fun addDrink(milliliters: Int, fromBottle: Boolean = false) {
         viewModelScope.launch {
             try {
-                api.add(store.current.username, milliliters)
+                val entry = api.add(store.current.username, milliliters)
                 load()
-                _messages.tryEmit(if (fromBottle) "Bottle synced $milliliters ml" else "Added $milliliters ml")
+                _added.tryEmit(AddedDrink(entry, fromBottle))
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -160,6 +167,20 @@ class DrinklyViewModel(app: Application) : AndroidViewModel(app) {
                 throw e
             } catch (e: Exception) {
                 _messages.tryEmit("Couldn't remove the drink.")
+            }
+        }
+    }
+
+    /** Takes back a drink from the notice, quietly unless it fails. */
+    fun undoDrink(entry: DrinkEntry) {
+        viewModelScope.launch {
+            try {
+                api.delete(entry.id)
+                load()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _messages.tryEmit("Couldn't undo the drink. ${e.message.orEmpty()}".trim())
             }
         }
     }

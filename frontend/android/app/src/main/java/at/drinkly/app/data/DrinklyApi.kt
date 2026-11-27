@@ -26,23 +26,15 @@ class DrinklyApi(private val baseUrl: () -> String) {
 
     suspend fun entries(username: String): List<DrinkEntry> = withContext(Dispatchers.IO) {
         val array = JSONArray(request("GET", "/entries/" + encode(username)))
-        (0 until array.length()).map { i ->
-            val o = array.getJSONObject(i)
-            DrinkEntry(
-                id = o.getInt("id"),
-                timestamp = o.optString("timestamp").takeIf { it.isNotEmpty() && it != "null" }
-                    ?.let { OffsetDateTime.parse(it).toInstant() } ?: Instant.now(),
-                liters = o.getDouble("drinkingAmount"),
-            )
-        }
+        (0 until array.length()).map { i -> entry(array.getJSONObject(i)) }
     }
 
-    suspend fun add(username: String, milliliters: Int) = withContext(Dispatchers.IO) {
+    /** Saves a drink and returns it as stored, so it can be undone by its id. */
+    suspend fun add(username: String, milliliters: Int): DrinkEntry = withContext(Dispatchers.IO) {
         val body = JSONObject()
             .put("user", JSONObject().put("username", username))
             .put("drinkingAmount", milliliters / 1000.0)
-        request("POST", "/entries", body.toString())
-        Unit
+        entry(JSONObject(request("POST", "/entries", body.toString())))
     }
 
     suspend fun delete(id: Int) = withContext(Dispatchers.IO) {
@@ -104,6 +96,13 @@ class DrinklyApi(private val baseUrl: () -> String) {
         conn.readTimeout = 10000
         return conn
     }
+
+    private fun entry(o: JSONObject) = DrinkEntry(
+        id = o.getInt("id"),
+        timestamp = o.optString("timestamp").takeIf { it.isNotEmpty() && it != "null" }
+            ?.let { OffsetDateTime.parse(it).toInstant() } ?: Instant.now(),
+        liters = o.getDouble("drinkingAmount"),
+    )
 
     private fun encode(segment: String) = URLEncoder.encode(segment, "UTF-8").replace("+", "%20")
 }
