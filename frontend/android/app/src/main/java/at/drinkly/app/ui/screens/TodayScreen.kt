@@ -143,11 +143,7 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
                 Spacer(Modifier.width(6.dp))
                 Text("L", Modifier.alignByBaseline(), fontSize = 32.sp, fontWeight = FontWeight.SemiBold, color = accent)
             }
-            Spacer(Modifier.height(8.dp))
-            StreakChip(d.streak)
-            // The status card is hidden for now; bring it back with StatusCard(d.message, d.streak)
-
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(16.dp))
             val source = remember { MutableInteractionSource() }
             Button(
                 onClick = { showAddSheet = true },
@@ -161,6 +157,10 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
             ) {
                 Icon(Icons.Rounded.Add, contentDescription = "Add a drink", modifier = Modifier.size(32.dp))
             }
+
+            Spacer(Modifier.height(24.dp))
+            StreakChip(d.streak)
+            // The status card is hidden for now; bring it back with StatusCard(d.message, d.streak)
 
             Spacer(Modifier.weight(1f))
         }
