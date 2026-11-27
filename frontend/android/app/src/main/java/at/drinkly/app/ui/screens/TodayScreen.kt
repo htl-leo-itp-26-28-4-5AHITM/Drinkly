@@ -56,6 +56,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
@@ -108,23 +109,22 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
             modifier = Modifier.fillMaxSize(),
         )
 
-        Column(
+        Row(
             Modifier
-                .fillMaxSize()
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
                 .statusBarsPadding()
-                .navigationBarsPadding()
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 92.dp), // the floating bottom bar
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .padding(top = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                BottlePill(d.bottle, onBottle)
-                Spacer(Modifier.weight(1f))
-                SyncButton(d, onRefresh)
-            }
-
+            BottlePill(d.bottle, onBottle)
             Spacer(Modifier.weight(1f))
+            SyncButton(d, onRefresh)
+        }
 
+        // Number and plus sit in the vertical middle of the whole screen
+        Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
             Row(
                 Modifier.semantics(mergeDescendants = true) {},
                 verticalAlignment = Alignment.Bottom,
@@ -161,10 +161,11 @@ fun TodayScreen(d: Dashboard, onAdd: (Int) -> Unit, onRefresh: () -> Unit, onBot
             ) {
                 Icon(Icons.Rounded.Add, contentDescription = "Add a drink", modifier = Modifier.size(32.dp))
             }
+        }
 
-            Spacer(Modifier.weight(1f))
+        // The streak sits in the lower third
+        Box(Modifier.align(BiasAlignment(horizontalBias = 0f, verticalBias = 0.6f))) {
             BigStreak(d.streak)
-            Spacer(Modifier.weight(0.5f))
         }
     }
 
