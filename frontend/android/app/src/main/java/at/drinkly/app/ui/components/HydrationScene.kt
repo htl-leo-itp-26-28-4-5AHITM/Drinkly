@@ -6,6 +6,9 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -19,8 +22,8 @@ import kotlin.math.PI
 import kotlin.math.sin
 
 /**
- * The Today background: water rising from the bottom edge (empty = nothing drunk yet) to the very top
- * once the goal is reached.
+ * The Today background: water rising from the bottom edge (empty = nothing drunk yet) to just below
+ * the status bar once the goal is reached, so the wave stays visible.
  *
  * [fill] is today's intake divided by the goal.
  */
@@ -34,10 +37,12 @@ fun HydrationScene(fill: Float, water: Color, modifier: Modifier = Modifier) {
         label = "phase",
     )
 
+    val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+
     Canvas(modifier) {
         val scale = SceneScale(
             zero = size.height + 12.dp.toPx(), // empty water hides below the screen
-            full = -12.dp.toPx(), // at the goal even the wave crests are above the screen
+            full = statusBar.toPx() + 24.dp.toPx(), // at the goal the wave still shows just below the status bar
         )
         drawRect(Brush.verticalGradient(listOf(Color.White, DrinklyColors.Sky)))
 
