@@ -6,7 +6,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberUpdatedState
@@ -129,7 +129,7 @@ fun TodayScreen(
         // On a cold start, wait briefly for the first load so it doesn't count up to 0
         withTimeoutOrNull(2000) { snapshotFlow { hasEntries }.first { it } }
         fill.snapTo(progress)
-        intro.animateTo(1f, tween(durationMillis = 900, easing = FastOutSlowInEasing))
+        intro.animateTo(1f, tween(durationMillis = 1200, easing = EaseOutCubic))
         onIntroPlayed()
     }
     // Start from 0 in the very frame the intro is requested (the reset in the effect only lands a frame later)
