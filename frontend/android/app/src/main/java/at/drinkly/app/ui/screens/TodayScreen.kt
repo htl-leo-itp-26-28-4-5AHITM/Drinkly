@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -197,10 +196,10 @@ private val HydrationStatus.icon: ImageVector
         HydrationStatus.TOO_MUCH -> Icons.Rounded.PanTool
     }
 
-/** What's going on right now plus the streak, in one card. */
+/** What's going on right now plus the streak, as one pill: status on the left, streak chip on the right. */
 @Composable
 private fun StatusCard(message: HydrationMessage, streak: Int) {
-    val shape = RoundedCornerShape(22.dp)
+    val shape = RoundedCornerShape(50)
     val accent = message.status.accent
     Row(
         Modifier
@@ -208,31 +207,40 @@ private fun StatusCard(message: HydrationMessage, streak: Int) {
             .shadow(12.dp, shape, ambientColor = DrinklyColors.Navy.copy(alpha = 0.2f), spotColor = DrinklyColors.Navy.copy(alpha = 0.2f))
             .clip(shape)
             .background(Color.White.copy(alpha = 0.95f))
-            .padding(14.dp),
+            .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            message.status.icon, contentDescription = null, tint = accent,
+            message.status.icon, contentDescription = null, tint = Color.White,
             modifier = Modifier
                 .size(44.dp)
                 .clip(CircleShape)
-                .background(accent.copy(alpha = 0.14f))
+                .background(accent)
                 .padding(11.dp),
         )
-        Spacer(Modifier.width(14.dp))
+        Spacer(Modifier.width(12.dp))
         Text(message.title, Modifier.weight(1f), fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = DrinklyColors.Ink)
-        Box(Modifier.padding(horizontal = 12.dp).width(1.dp).height(40.dp).background(DrinklyColors.Line))
-        Column(
-            Modifier.widthIn(min = 44.dp).clearAndSetSemantics { contentDescription = "$streak-day streak" },
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            val color = if (streak > 0) DrinklyColors.Blue else DrinklyColors.NoData
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Rounded.LocalFireDepartment, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
-                Text("$streak", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = color)
-            }
-            Text(if (streak == 1) "day" else "days", fontSize = 12.sp, color = DrinklyColors.Muted)
-        }
+        StreakChip(streak)
+    }
+}
+
+@Composable
+private fun StreakChip(streak: Int) {
+    val active = streak > 0
+    val color = if (active) DrinklyColors.Blue else DrinklyColors.Muted
+    Row(
+        Modifier
+            .clip(RoundedCornerShape(50))
+            .background(if (active) DrinklyColors.Sky else DrinklyColors.NoData.copy(alpha = 0.3f))
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .clearAndSetSemantics { contentDescription = "$streak-day streak" },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Rounded.LocalFireDepartment, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(4.dp))
+        Text("$streak", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = color)
+        Spacer(Modifier.width(3.dp))
+        Text(if (streak == 1) "day" else "days", fontSize = 13.sp, color = DrinklyColors.Muted)
     }
 }
 
